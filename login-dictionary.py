@@ -10,11 +10,14 @@ credentials = [
     {'username': 'username4', 'password': 'password4'}
 ]
 
+# Defined the login fuction
 def login_with_credentials(credentials):
+    # Traverese the list for every userid and password stored 
     for cred in credentials:
         username = cred['username']
         password = cred['password']
 
+        # Website meta deta --> essentially required
         payload = {
             'mode': '191',
             'username': username,
@@ -23,12 +26,14 @@ def login_with_credentials(credentials):
         }
 
         with requests.Session() as s:
-            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload) #jiit sophos portal link change it to your institutions' link
+            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload) 
+            # (JIIT Sophos Portal link) --> Change it to your institutions' link
             if p.status_code == 200:
                 xml_content = p.content
                 root = ET.fromstring(xml_content)
                 message_element = root.find('message')
                 if message_element is not None:
+                    # Fetches the message produced --> Customise it as per your portal's error messages
                     message_text = message_element.text
                     print(message_text)
                     if (message_text == 'Login failed. You have reached the maximum login limit.' or
