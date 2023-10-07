@@ -18,7 +18,7 @@ def login(credentials):
         username = cred['username']
         password = cred['password']
 
-        # Website meta deta --> essentially required
+        # Website meta deta --> essentially required + the login ids and all to be posted (submitted to the website)
         payload = {
             'mode': '191',
             'username': username,
@@ -27,12 +27,12 @@ def login(credentials):
         }
 
         with requests.Session() as s:
-            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload) 
+            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)  # p --> responce of the website after posting the payload
             # (JIIT Sophos Portal link) --> Change it to your institutions' link
             if p.status_code == 200:
-                xml_content = p.content
-                root = ET.fromstring(xml_content)
-                message_element = root.find('message')
+                xml_content = p.content # Stores/Formats the responce (p) in the form of a xml
+                root = ET.fromstring(xml_content) # Creates an XML ElementTree object (root) that can be used to navigate and extract data from the XML document
+                message_element = root.find('message') # Only use of root was to locate message and we use it as follows
                 if message_element is not None:
                     # Fetches the message produced --> Customise it as per your portal's error messages
                     message_text = message_element.text
