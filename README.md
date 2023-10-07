@@ -72,7 +72,7 @@ pip install pyinstaller
 ```
 
 ```shell
-pyinstaller --onefile login_script.py
+pyinstaller --onefile version02.py
 ```
 
 This will create an executable file in the dist directory.
