@@ -9,9 +9,10 @@ credentials = [
     {'username': 'username3', 'password': 'password3'},
     {'username': 'username4', 'password': 'password4'}
 ]
+# username1, password1 and so on are just placeholders, you have to edit those with your actual credentials
 
 # Defined the login fuction
-def login_with_credentials(credentials):
+def login(credentials):
     # Traverese the list for every userid and password stored 
     for cred in credentials:
         username = cred['username']
@@ -53,4 +54,4 @@ def login_with_credentials(credentials):
     print("All login attempts failed.")
 
 # Call the function with the list of credentials
-login_with_credentials(credentials)
+login(credentials)
