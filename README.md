@@ -73,7 +73,7 @@ pyinstaller --onefile version02.py
 This will create an executable file in the dist directory.
 
 ```shell
-./dist/version02
+./dist/login_script
 ```
 
 **Note:** Before creating the executable, make sure you have entered your correct login credentials in the Python script.
