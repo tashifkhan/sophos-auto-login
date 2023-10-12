@@ -37,13 +37,11 @@ def login(credentials):
                     # Fetches the message produced --> Customise it as per your portal's error messages
                     message_text = message_element.text
                     print(message_text)
-                    print("\n")
                     if (message_text == 'Login failed. You have reached the maximum login limit.' or
                             message_text == 'Your data transfer has been exceeded, Please contact the administrator'):
-                        print(f'Login failed for {username}. Trying the next credentials.\n')
+                        print(f'        Login failed for {username}. Trying the next credentials.\n')
                     elif message_text == "You are signed in as {username}":
-                        print(f"Connected using {username}!\n")
-                        time.sleep(1700) # After a successfull login it waits for 28 mins and 20 secs to try to login again
+                        print(f"        Connected using {username}!\n")
                     else:
                         print("Unknown response:", message_text)
                 else:
