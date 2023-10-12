@@ -42,8 +42,7 @@ def login(credentials):
                         print(f'Login failed for {username}. Trying the next credentials.')
                     elif message_text == f"You are signed in as {username}":
                         print(f"Connected using {username}!")
-                        time.sleep(1700)
-                        return  # Successful login, exit the loop
+                        time.sleep(1700) # After a successfull login it waits for 28 mins and 20 secs to try to login again
                     else:
                         print("Unknown response:", message_text)
                 else:
