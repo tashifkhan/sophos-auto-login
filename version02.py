@@ -41,7 +41,7 @@ def login(credentials):
                     if (message_text == 'Login failed. You have reached the maximum login limit.' or
                             message_text == 'Your data transfer has been exceeded, Please contact the administrator'):
                         print(f'Login failed for {username}. Trying the next credentials.\n')
-                    elif message_text == f"You are signed in as {username}":
+                    elif message_text == "You are signed in as {username}":
                         print(f"Connected using {username}!\n")
                         time.sleep(1700) # After a successfull login it waits for 28 mins and 20 secs to try to login again
                     else:
