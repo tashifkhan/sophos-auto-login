@@ -12,7 +12,7 @@ credentials = [
 # username1, password1 and so on are just placeholders, you have to edit those with your actual credentials
 
 # Defined the login fuction
-def login(credentials):
+def login(credentials) -> int:
     # Traverese the list for every userid and password stored 
     for cred in credentials:
         username = cred['username']
@@ -42,6 +42,8 @@ def login(credentials):
                         print(f'Login failed for {username}. Trying the next credentials.\n')
                     elif message_text == "You are signed in as {username}":
                         print(f"Connected using {username}!\n")
+                        time.sleep(1700) # After a successfull login it waits for 28 mins and 20 secs to try to login again
+                        return 0
                     else:
                         print("Unknown response:", message_text)
                 else:
@@ -50,6 +52,9 @@ def login(credentials):
                 print("Error Response:", p)
 
     print("All login attempts failed.")
+    return 1
 
 # Call the function with the list of credentials
-login(credentials)
+while True:
+    if login(credentials) != 0:
+        break
