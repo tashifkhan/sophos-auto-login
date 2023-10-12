@@ -39,9 +39,9 @@ def login(credentials):
                     print(message_text)
                     if (message_text == 'Login failed. You have reached the maximum login limit.' or
                             message_text == 'Your data transfer has been exceeded, Please contact the administrator'):
-                        print(f'        Login failed for {username}. Trying the next credentials.\n')
+                        print(f'Login failed for {username}. Trying the next credentials.\n')
                     elif message_text == "You are signed in as {username}":
-                        print(f"        Connected using {username}!\n")
+                        print(f"Connected using {username}!\n")
                     else:
                         print("Unknown response:", message_text)
                 else:
