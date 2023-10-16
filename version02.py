@@ -1,3 +1,4 @@
+import os
 import requests
 import time
 import xml.etree.ElementTree as ET
@@ -42,7 +43,8 @@ def login(credentials) -> int:
                         print(f'Login failed for {username}. Trying the next credentials.\n')
                     elif message_text == "You are signed in as {username}":
                         print(f"Connected using {username}!\n")
-                        time.sleep(1700) # After a successfull login it waits for 28 mins and 20 secs to try to login again
+                        time.sleep(10*60) # After a successfull login it waits for 10 mins and to try to login again
+                        os.system("clear") # Clears the terminal
                         return 0
                     else:
                         print("Unknown response:", message_text)
@@ -55,6 +57,9 @@ def login(credentials) -> int:
     return 1
 
 # Call the function with the list of credentials
-while True:
+count = 0 # Measures the number of login attempts
+while True: 
+    count += 1
+    print(f"Login attempt {count}")
     if login(credentials) != 0:
         break
