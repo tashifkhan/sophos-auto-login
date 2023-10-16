@@ -60,6 +60,6 @@ def login(credentials) -> int:
 count = 0 # Measures the number of login attempts
 while True: 
     count += 1
-    print(f"Login attempt {count}")
+    print(f"Login attempt {count}\n")
     if login(credentials) != 0:
         break
