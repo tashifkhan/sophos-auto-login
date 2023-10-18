@@ -1,6 +1,6 @@
 # Sophos Automatic Login & Authentication
 
-## Introdction
+## Introduction
 
 This is a Python Script that enables you to to login into your internet web authentication portal automatically. It relogs you in every 28 mins to mitigate the issue of auto logout after a certain time period
 
