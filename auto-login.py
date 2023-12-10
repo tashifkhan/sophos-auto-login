@@ -5,7 +5,7 @@ import csv
 import xml.etree.ElementTree as ET
 
 # Make a CSV file called Credentials.csv which will store all the Usernamws & Passwords 
-with open("file_path", "r") as cred:
+with open("file_path", "r") as cred:    # Change the file_path varible to the the path where you saved your csv file
     file_object = csv.reader(cred)
     next(file_object)   # Considering first line is Headings only thus we skip that line
     credentials = []    # Define a list of dictionaries containing user IDs and passwords
