@@ -54,13 +54,13 @@ pip install pyinstaller
 ```
 
 ```shell
-pyinstaller --onefile version02.py
+pyinstaller --onefile auto-login.py
 ```
 
 This will create an executable file in the dist directory.
 
 ```shell
-./dist/login_script
+./dist/auto-login
 ```
 
 **Note:** Before creating the executable, make sure you have entered your correct login credentials in the Python script.
