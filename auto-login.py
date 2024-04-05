@@ -52,7 +52,7 @@ def login(credentials) -> int:
                         print(f'Login failed for {username}. Trying the next credentials.\n')
                     elif message_text == "You are signed in as {username}":
                         print(f"Connected using {username}!\n")
-                        time.sleep(10*60) # After a successfull login it waits for 10 mins and to try to login again
+                        time.sleep(2*60) # After a successfull login it waits for 2 mins and to try to login again
                         os.system("clear") # Clears the terminal
                         return 0
                     else:
@@ -69,6 +69,13 @@ def login(credentials) -> int:
 count = 0 # Measures the number of login attempts
 while True: 
     count += 1
+    time = count * 2
+    hrs = time // 60
+    mins = time % 60
     print(f"Login attempt {count}\n")
+    if hrs == 0:
+        print(f"Time: {mins} minutes\n")
+    else:
+        print(f"Time: {hrs} hours {mins} minutes\n")
     if login(credentials) != 0:
         break

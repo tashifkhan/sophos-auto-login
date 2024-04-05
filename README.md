@@ -1,8 +1,8 @@
 # Sophos Automatic Login & Authentication
 
-## Introdction
+## Introduction
 
-This is a Python Script that enables you to to login into your internet web authentication portal automatically. It relogs you in every 28 mins to mitigate the issue of auto logout after a certain time period
+This Python script automates the login process for an internet web authentication portal, relogging you in every 10 minutes to prevent automatic logout. The updated version now stores the login credentials in a CSV file, providing a more organized and scalable approach.
 
 It is basically a _**Program to Login to a Server**_
 
@@ -21,39 +21,26 @@ pip install requests lxml
 
 ## Usage
 
-#### Option 01 
+1. Open the Python file (e.g., auto-login.py) in a text editor.
 
-1. Open the Python file `version01.py` in a text editor.
-2. Fill in your login credentials:
-    - Update `username` and `password` with your primary login credentials.
-    - Update `username1` and `password1` with your secondary login credentials.
-3. Save the file.
+2. Create a CSV file (e.g., credentials.csv) with a header of "username" followed by "password" and fill in your login credentials.
 
-**OR**
+3. Update the `file_path` variable in the Python script with the correct path to your CSV file.
 
-#### Option 02
-
-1. Open the Python file `version02.py` in a text editor
-2. Fill all your login credentials
-	- Update the `credential` list
-	- Update the dictionary in the list from the placeholders
-	- Change `username1`, `password1`, etc with your credentials
-	- If you have more Login ID's available append those to the list as dictionaries 
-	- Similarly remove the unwanted amount of IDs
-3. Save the file
+4. Save the file.
 
 ## Running the Program
 
 To run the program, simply execute the Python script using your preferred Python interpreter:
 
 ```shell
-python version02.py
+python auto-login.py
 ```
 
 OR
 
 ```shell
-python3 version02.py
+python3 auto-login.py
 ```
 
 ## Creating an Executable
@@ -67,13 +54,13 @@ pip install pyinstaller
 ```
 
 ```shell
-pyinstaller --onefile version02.py
+pyinstaller --onefile auto-login.py
 ```
 
 This will create an executable file in the dist directory.
 
 ```shell
-./dist/login_script
+./dist/auto-login
 ```
 
 **Note:** Before creating the executable, make sure you have entered your correct login credentials in the Python script.
