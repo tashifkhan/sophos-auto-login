@@ -69,13 +69,16 @@ def login(credentials) -> int:
 count = 0 # Measures the number of login attempts
 while True: 
     count += 1
-    time = count * 2
-    hrs = time // 60
-    mins = time % 60
-    print(f"Login attempt {count}")
-    if hrs == 0:
-        print(f"Running for {mins} minutes\n")
+    duration = (count-1) * 2
+    hrs = duration // 60
+    mins = duration % 60
+    if count > 1:
+        print(f"Login attempt {count}")
+        if hrs == 0:
+            print(f"Running for {mins} minutes\n")
+        else:
+            print(f"Running for {hrs} hours {mins} minutes\n")
     else:
-        print(f"Running for {hrs} hours {mins} minutes\n")
+        print(f"Login attempt {count}\n")
     if login(credentials) != 0:
         break
