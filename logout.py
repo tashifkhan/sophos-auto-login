@@ -1,7 +1,7 @@
 import requests
 import xml.etree.ElementTree as ET
 
-credential = ["username", "password"]
+credential = ["22102141", "new-157030AR"]
 
 def logout(credential) -> int:
 
