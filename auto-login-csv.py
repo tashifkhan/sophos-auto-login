@@ -108,9 +108,9 @@ while True:
     mins = duration % 60
     if count > 1:
         if hrs == 0:
-            print(f"Running for {mins} minutes...\n\n")
+            print(f"Running for {mins} minutes...\n")
         else:
-            print(f"Running for {hrs} hours {mins} minutes...\n\n")
+            print(f"Running for {hrs} hours {mins} minutes...\n")
         print(f"Login attempt {count}")
     else:
         print(f"Login attempt {count}")
