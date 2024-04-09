@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This Python script automates the login process for an internet web authentication portal, relogging you in every 10 minutes to prevent automatic logout. The updated version now stores the login credentials in a CSV file, providing a more organized and scalable approach.
+This Python script automates the login process for an internet web authentication portal, relogging you in every 2 minutes to prevent automatic logout. The updated version now stores the login credentials in a CSV file, providing a more organized and scalable approach. But the legacy version with dicsionary implementation is also uploaded (as login-dict.py).
 
 It is basically a _**Program to Login to a Server**_
 
@@ -54,13 +54,13 @@ pip install pyinstaller
 ```
 
 ```shell
-pyinstaller --onefile auto-login.py
+pyinstaller --onefile auto-login-csv.py
 ```
 
 This will create an executable file in the dist directory.
 
 ```shell
-./dist/auto-login
+./dist/auto-login-csv
 ```
 
 **Note:** Before creating the executable, make sure you have entered your correct login credentials in the Python script.
