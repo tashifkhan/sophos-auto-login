@@ -7,7 +7,7 @@ import signal
 import sys
 
 credentials = [
-    {'username': '22102141', 'password': 'new-157030AR'},
+    {'username': 'username1', 'password': 'password1'},
     {'username': 'username2', 'password': 'password2'},
     {'username': 'username3', 'password': 'password3'},
     {'username': 'username4', 'password': 'password4'}
@@ -80,7 +80,6 @@ def logout(credential) -> int:
             return 0
 
 def exit_handler(signal=None, frame=None):
-    global current_credential_index
     print("Exiting...")
     for credential in credentials:
         logout(credential)
