@@ -5,21 +5,13 @@ import csv
 import xml.etree.ElementTree as ET
 
 # Make a CSV file called Credentials.csv which will store all the Usernamws & Passwords 
-with open("file_path", "r") as cred:    # Change the file_path varible to the the path where you saved your csv file
+with open("/Users/taf/Documents/Credentials.csv", "r") as cred:    # Change the file_path varible to the the path where you saved your csv file
     file_object = csv.reader(cred)
     next(file_object)   # Considering first line is Headings only thus we skip that line
     credentials = []    # Define a list of dictionaries containing user IDs and passwords
     for creds in file_object:
         credentials.append({'username': creds[0], 'password': creds[1]})
 
-# This was the previous imprementation --> here we directly added the UserIDs and Passwords in the List of Dictionaries
-# credentials = [
-#     {'username': 'username1', 'password': 'password1'},
-#     {'username': 'username2', 'password': 'password2'},
-#     {'username': 'username3', 'password': 'password3'},
-#     {'username': 'username4', 'password': 'password4'}
-# ]
-# username1, password1 and so on are just placeholders, you have to edit those with your actual credentials
 
 # Defined the login fuction
 def login(credentials) -> int:
@@ -28,7 +20,7 @@ def login(credentials) -> int:
         username = cred['username']
         password = cred['password']
 
-        # Website meta deta --> essentially required + the login ids and all to be posted (submitted to the website)
+        # Post request data
         payload = {
             'mode': '191',
             'username': username,
@@ -40,18 +32,17 @@ def login(credentials) -> int:
             p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)  # p --> responce of the website after posting the payload
             # (JIIT Sophos Portal link) --> Change it to your institutions' link
             if p.status_code == 200:
-                xml_content = p.content # Stores/Formats the responce (p) in the form of a xml
+                xml_content = p.content # Responce is XLM 
                 root = ET.fromstring(xml_content) # Creates an XML ElementTree object (root) that can be used to navigate and extract data from the XML document
                 message_element = root.find('message') # Only use of root was to locate message and we use it as follows
                 if message_element is not None:
                     # Fetches the message produced --> Customise it as per your portal's error messages
                     message_text = message_element.text
-                    print(message_text)
                     if (message_text == 'Login failed. You have reached the maximum login limit.' or
                             message_text == 'Your data transfer has been exceeded, Please contact the administrator'):
                         print(f'Login failed for {username}. Trying the next credentials.\n')
                     elif message_text == "You are signed in as {username}":
-                        print(f"Connected using {username}!\n")
+                        print(f"Success\nConnected using {username}!\n")
                         time.sleep(2*60) # After a successfull login it waits for 2 mins and to try to login again
                         os.system("clear") # Clears the terminal
                         return 0
@@ -73,12 +64,12 @@ while True:
     hrs = duration // 60
     mins = duration % 60
     if count > 1:
-        print(f"Login attempt {count}")
         if hrs == 0:
-            print(f"Running for {mins} minutes\n")
+            print(f"Running for {mins} minutes...\n\n")
         else:
-            print(f"Running for {hrs} hours {mins} minutes\n")
+            print(f"Running for {hrs} hours {mins} minutes...\n\n")
+        print(f"Login attempt {count}")
     else:
-        print(f"Login attempt {count}\n")
+        print(f"Login attempt {count}")
     if login(credentials) != 0:
         break
