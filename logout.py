@@ -1,8 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
 
-credential = ["22102141", "new-157030AR"]
-
 def logout(credential) -> int:
 
     payload = {
@@ -30,4 +28,6 @@ def logout(credential) -> int:
             print("Error Response:", p)
             return 0
 
-logout(credential)
+if __name__ == "__main__":
+    credential = ('username', 'password')
+    credential = ('username', 'password')
