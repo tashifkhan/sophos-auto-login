@@ -66,6 +66,27 @@ class CredentialManager:
         except sqlite3.IntegrityError:
             print("Username already exists!")
 
+    def add_credential_gui(self, username, password):
+        """Add credentials from GUI interface"""
+        # Hash password for verification
+        salt = bcrypt.gensalt()
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        
+        # Encrypt password for payload
+        password_encrypted = self.fernet.encrypt(password.encode('utf-8'))
+        
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO credentials 
+                    (username, password_hash, password_encrypted) 
+                    VALUES (?, ?, ?)""",
+                    (username, password_hash, password_encrypted))
+                conn.commit()
+        except sqlite3.IntegrityError:
+            raise Exception("Username already exists!")
+
     def get_credentials(self):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -349,14 +370,37 @@ class SophosLoginGUI:
             
     def auto_login_loop(self):
         count = 0
+        global cred_index
+        
         while self.running:
             count += 1
-            self.status_var.set(f"Status: Login attempt {count}")
-            if login(self.credential_manager) != 0:
-                self.running = False
-                self.root.after(0, self.toggle_auto_login)
-                break
+            duration = (count-1) * 2
+            hrs = duration // 60
+            mins = duration % 60
             
+            status_text = f"Login attempt {count}"
+            if count > 1:
+                if hrs == 0:
+                    status_text += f"\nRunning for {mins} minutes"
+                else:
+                    status_text += f"\nRunning for {hrs} hours {mins} minutes"
+            
+            self.status_var.set(status_text)
+            self.root.update_idletasks()
+            
+            try:
+                result = login(self.credential_manager)
+                if result != 0:
+                    self.status_var.set("Login failed. Stopping auto-login.")
+                    self.running = False
+                    self.root.after(0, lambda: self.toggle_btn.configure(text="Start Auto Login"))
+                    break
+            except Exception as e:
+                self.status_var.set(f"Error: {str(e)}")
+                self.running = False
+                self.root.after(0, lambda: self.toggle_btn.configure(text="Start Auto Login"))
+                break
+
     def run(self):
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
