@@ -118,7 +118,7 @@ def login(credential_manager) -> int:
     print("All login attempts failed.")
     return 1
 
-def exit_handler(credential,, signal=None, frame=None):
+def exit_handler(credential, signal=None, frame=None):
     print("\nExiting...")
     logout.logout(credential)
     sys.exit(0)
