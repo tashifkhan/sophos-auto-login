@@ -9,7 +9,6 @@ import sqlite3
 import bcrypt
 from cryptography.fernet import Fernet
 from getpass import getpass
-import logout
 
 class CredentialManager:
     def __init__(self, db_path="credentials.db"):
@@ -85,30 +84,36 @@ def login(credential_manager) -> int:
     
     for cred in credentials:
         username = cred['username']
-        password = cred['password']  # Now using decrypted password
+        password = cred['password']
 
+        # Post request data
         payload = {
             'mode': '191',
             'username': username,
-            'password': password,  # Plain text password for payload
+            'password': password,
             'a': '1661062428616'
         }
 
         with requests.Session() as s:
-            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)
+            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)  # p --> responce of the website after posting the payload
+            # (JIIT Sophos Portal link) --> Change it to your institutions' link
             if p.status_code == 200:
-                xml_content = p.content
-                root = ET.fromstring(xml_content)
-                message_element = root.find('message')
+                xml_content = p.content # Responce is XLM 
+                root = ET.fromstring(xml_content) # Creates an XML ElementTree object (root) that can be used to navigate and extract data from the XML document
+                message_element = root.find('message') # Only use of root was to locate message and we use it as follows
                 if message_element is not None:
+                    # Fetches the message produced --> Customise it as per your portal's error messages
                     message_text = message_element.text
-                    if message_text == f"You are signed in as {username}":
+                    if (message_text == 'Login failed. You have reached the maximum login limit.' or
+                            message_text == 'Your data transfer has been exceeded, Please contact the administrator'):
+                        print(f'Login failed for {username}. Trying the next credentials.\n')
+                    elif message_text == "You are signed in as {username}":
                         print(f"Success\nConnected using {username}!\n")
-                        time.sleep(2*60)
-                        os.system("clear")
+                        time.sleep(2*60) # After a successfull login it waits for 2 mins and to try to login again
+                        os.system("clear") # Clears the terminal
                         return 0
                     else:
-                        print(f'Login failed for {username}. Trying next credentials.\n')
+                        print("Unknown response:", message_text)
                 else:
                     print("Message element not found.")
             else:
@@ -118,14 +123,42 @@ def login(credential_manager) -> int:
     print("All login attempts failed.")
     return 1
 
-def exit_handler(credential, signal=None, frame=None):
+def logout(credential) -> int:
+
+    payload = {
+        'mode': '193',
+        'username': credential['username'],
+        'password': credential['password'],
+        'a': '1661062428616'
+    }
+
+    with requests.Session() as s:
+        p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)  
+        if p.status_code == 200:
+            xml_content = p.content 
+            root = ET.fromstring(xml_content)
+            message_element = root.find('message')
+            if message_element is not None:
+                message_text = message_element.text
+                if message_text == "You&#39;ve signed out":
+                    print(f"Logged out {credential['username']}")
+                    return 1
+            else:
+                print("Message element not found.")
+                return 0
+        else:
+            print("Error Response:", p)
+            return 0
+
+def exit_handler(signal=None, frame=None):
     print("\nExiting...")
-    logout.logout(credential)
+    credentials = credential_manager.get_credentials()
+    if credentials:
+        logout(credentials[cred_index])
     sys.exit(0)
 
 def main():
     credential_manager = CredentialManager()
-    
     
     while True:
         print("\n1. Add new login credentials")
@@ -160,7 +193,8 @@ def main():
         else:
             print("Invalid choice. Please try again.")
 
-
 if __name__ == "__main__":
+    credential_manager = CredentialManager()
+    cred_index = 0
     atexit.register(exit_handler)
     main()

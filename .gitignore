@@ -2,3 +2,5 @@ env
 test
 databae.db
 credentials.db
+encryption.key
+__pycache__
