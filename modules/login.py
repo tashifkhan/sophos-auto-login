@@ -1,9 +1,10 @@
 import requests
+from Credentials import Creditial
 import xml.etree.ElementTree as ET
 import time
 import os
 
-def login(credentials: list) -> tuple[bool, int]:
+def login(credentials: list[Creditial]) -> tuple[bool, int]:
     cred_index = 0
     for cred in credentials:
         username = cred['username']

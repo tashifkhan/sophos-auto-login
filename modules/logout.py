@@ -1,12 +1,16 @@
 import requests
 import xml.etree.ElementTree as ET
+from Credentials import Creditial
 
-def logout(credential) -> bool | None:
+def logout(credential : Creditial) -> bool | None:
+
+    username = credential["username"]
+    password = credential["password"]
 
     payload = {
         'mode': '193',
-        'username': credential[0],
-        'password': credential[1],
+        'username': username,
+        'password': password,
         'a': '1661062428616'
     }
 
@@ -29,5 +33,8 @@ def logout(credential) -> bool | None:
             return False
 
 if __name__ == "__main__":
-    credential = ('username', 'password')
+    credential = {
+        "username": "username",
+        "password": "password"
+    }
     logout(credential)
