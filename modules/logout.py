@@ -14,6 +14,8 @@ def logout(credential : Creditial) -> bool | None:
         'a': '1661062428616'
     }
 
+    """ Note: htat just visiting this endpoint logs out whatever id is logged in """
+
     with requests.Session() as s:
         p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)
         if p.status_code == 200:
