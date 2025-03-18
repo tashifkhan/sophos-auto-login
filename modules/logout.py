@@ -23,7 +23,7 @@ def logout(credential : Creditial) -> bool | None:
             if message_element is not None:
                 message_text = message_element.text
                 if message_text == "You&#39;ve signed out":
-                    print(f"Logged out {credential[0]}")
+                    print(f"Logged out {username}")
                     return True
             else:
                 print("Message element not found.")
