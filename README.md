@@ -103,7 +103,7 @@ To create an executable from the Python script, follow these steps:
 1. Clone the repository and navigate to the project directory:
 
 ```shell
-git clone https://github.com/your-repo/sophos-auto-login.git
+git clone https://github.com/tashifkhan/sophos-auto-login.git
 cd sophos-auto-login
 ```
 
