@@ -1,5 +1,5 @@
 import requests
-from Credentials import Creditial
+from .Credentials import Creditial
 import xml.etree.ElementTree as ET
 import time
 import os
@@ -13,7 +13,7 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
         payload = {
             'mode': '191',
             'username': username,
-            'password': password,
+            'password': password, 
             'a': '1661062428616'
         }
 
