@@ -1,6 +1,7 @@
 import sqlite3
 import os
 from getpass import getpass
+import csv
 
 class CredentialManger:
     def __init__(self, db_path = os.path.join(os.path.dirname(__file__), "credentials.db")):
@@ -93,4 +94,30 @@ class CredentialManger:
             except (ValueError, IndexError):
                 print("Invalid selection. Please try again.")
                 return None
+
+    def export_to_csv(self, output_path=None):
+        
+        if not output_path:
+            output_path = os.path.join(os.path.dirname(self.db_path), "credentials.csv")
+        
+        credentials = self.get_credentials()
+        
+        if not credentials:
+            print("No credentials found to export.")
+            return None
+        
+        try:
+            with open(output_path, 'w', newline='') as csvfile:
+                fieldnames = ['username', 'password']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                
+                writer.writeheader()
+                for cred in credentials:
+                    writer.writerow(cred)
+                
+            print(f"Credentials exported successfully to {output_path}")
+            return output_path
+        except Exception as e:
+            print(f"Error exporting credentials: {e}")
+            return None
 
