@@ -5,12 +5,13 @@ import signal
 import os
 import time
 import argparse
+import sys
+import logging
 from colorama import init, Fore, Back, Style
 
 init(autoreset=True)
 
 def parse_arguments():
-    """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Sophos Auto Login Tool')
     parser.add_argument('--start', action='store_true', help='Start auto-login process immediately')
     parser.add_argument('--add', action='store_true', help='Add new credentials')
@@ -19,18 +20,138 @@ def parse_arguments():
     parser.add_argument('--export', type=str, nargs='?', const='', help='Export credentials to CSV (optional path)')
     parser.add_argument('--import', dest='import_csv', type=str, help='Import credentials from CSV file')
     parser.add_argument('--show', action='store_true', help='Display all stored credentials')
+    parser.add_argument('--daemon', action='store_true', help='Run auto-login process in background (daemon mode)')
     
     return parser.parse_args()
 
+def daemonize():
+    """Convert the current process to a daemon process."""
+    # Check if we're on a Unix-like system
+    if os.name != 'posix':
+        print(f"{Fore.RED}Daemon mode is only supported on Unix-like systems.{Style.RESET_ALL}")
+        sys.exit(1)
+        
+    # First fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # Exit first parent
+            sys.exit(0)
+    except OSError as e:
+        print(f"{Fore.RED}Fork #1 failed: {e}{Style.RESET_ALL}")
+        sys.exit(1)
+    
+    # Decouple from parent environment
+    os.chdir('/')
+    os.setsid()
+    os.umask(0)
+    
+    # Second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # Exit from second parent
+            sys.exit(0)
+    except OSError as e:
+        print(f"{Fore.RED}Fork #2 failed: {e}{Style.RESET_ALL}")
+        sys.exit(1)
+    
+    # Redirect standard file descriptors
+    sys.stdout.flush()
+    sys.stderr.flush()
+    
+    # Set up logging for daemon mode
+    log_dir = os.path.expanduser("~/.sophos-autologin")
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    log_file = os.path.join(log_dir, "sophos-autologin.log")
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    logging.info("Daemon started")
+    
+    # Redirect standard file descriptors to /dev/null
+    si = open(os.devnull, 'r')
+    so = open(os.devnull, 'a+')
+    se = open(os.devnull, 'a+')
+    
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
+    
+    # Write PID file
+    pid_file = os.path.join(log_dir, "sophos-autologin.pid")
+    with open(pid_file, 'w') as f:
+        f.write(str(os.getpid()))
+    
+    logging.info(f"Daemon process started with PID {os.getpid()}")
+    return log_file, pid_file
+
+def run_auto_login(credential_manager, daemon_mode=False):
+    credentials = credential_manager.get_credentials()
+    cred_index = 0
+    
+    if len(credentials) == 0:
+        if daemon_mode:
+            logging.error("No credentials found. Daemon exiting.")
+            return
+        else:
+            display_status("No credentials found. Please add credentials first.", "error")
+            return
+    
+    if not daemon_mode:
+        print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}\n")
+    else:
+        logging.info("Starting auto-login process in daemon mode")
+    
+    count = 0
+    
+    try:
+        while True:
+            count += 1
+            duration = (count-1) * 2  # Fixed: Changed 'X2' to '2'
+            
+            if not daemon_mode:
+                print(f"\n{Fore.CYAN}Login attempt {count}{Style.RESET_ALL}")
+                if count > 1:
+                    print(f"{Fore.BLUE}Running for {format_time(duration)}...{Style.RESET_ALL}\n")
+            else:
+                logging.info(f"Login attempt {count}. Running for {format_time(duration)}")
+            
+            stop, cred_index = module.login(credentials)
+            if stop:
+                if len(credentials) == 0:
+                    if daemon_mode:
+                        logging.error("No credentials found. Daemon exiting.")
+                    else:
+                        display_status("No credentials found.", "error")
+                else:
+                    module.logout(credentials[cred_index])
+                    if daemon_mode:
+                        logging.info("Auto-login stopped.")
+                    else:
+                        display_status("Auto-login stopped.", "warning")
+                break
+    except KeyboardInterrupt:
+        if not daemon_mode:
+            print()
+            display_status("Auto-login interrupted by user.", "warning")
+        else:
+            logging.info("Auto-login daemon interrupted by user.")
+        
+        if cred_index is not None and 0 <= cred_index < len(credentials):
+            module.logout(credentials[cred_index])
+
 def print_header():
-    """Print a stylized header for the application."""
     os.system('cls' if os.name == 'nt' else 'clear')
     print(f"{Fore.CYAN}{'=' * 60}")
     print(f"{Fore.CYAN}={Fore.WHITE}{Style.BRIGHT} SOPHOS AUTO LOGIN {Fore.CYAN + Style.NORMAL}{'=' * 40}")
     print(f"{Fore.CYAN}{'=' * 60}\n")
 
 def print_menu():
-    """Display the main menu options."""
     print(f"\n{Fore.YELLOW}Choose an option:{Style.RESET_ALL}")
     print(f"{Fore.GREEN}[1]{Style.RESET_ALL} Add new login credentials")
     print(f"{Fore.GREEN}[2]{Style.RESET_ALL} Start auto-login process")
@@ -44,7 +165,6 @@ def print_menu():
     return input(f"\n{Fore.YELLOW}Enter your choice (1-8): {Style.RESET_ALL}")
 
 def display_status(message, status_type="info"):
-    """Display a formatted status message."""
     if status_type == "success":
         print(f"\n{Fore.GREEN}✓ {message}{Style.RESET_ALL}")
     elif status_type == "error":
@@ -57,7 +177,6 @@ def display_status(message, status_type="info"):
     time.sleep(1) 
 
 def show_spinner(seconds, message="Processing"):
-    """Display a simple spinner animation to indicate progress."""
     spinner = ['-', '\\', '|', '/']
     end_time = time.time() + seconds
     i = 0
@@ -70,7 +189,6 @@ def show_spinner(seconds, message="Processing"):
     print("\r" + " " * (len(message) + 2) + "\r", end="")
 
 def format_time(minutes):
-    """Format minutes into hours and minutes."""
     hrs = minutes // 60
     mins = minutes % 60
     if hrs == 0:
@@ -85,6 +203,25 @@ def main():
     cred_index = 0
     credentials = credential_manager.get_credentials()
     running = True
+
+    # Handle daemon mode
+    if args.daemon:
+        if args.start:
+            try:
+                log_file, pid_file = daemonize()
+                print(f"{Fore.GREEN}Daemon started. Log file: {log_file}, PID file: {pid_file}{Style.RESET_ALL}")
+                signal.signal(signal.SIGINT, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
+                signal.signal(signal.SIGTERM, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
+                run_auto_login(credential_manager, daemon_mode=True)
+            except Exception as e:
+                if isinstance(e, KeyboardInterrupt):
+                    sys.exit(0)
+                logging.error(f"Daemon error: {e}")
+                sys.exit(1)
+        else:
+            print(f"{Fore.RED}--daemon must be used with --start{Style.RESET_ALL}")
+            sys.exit(1)
+        return
     
     signal.signal(signal.SIGINT, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
     
@@ -165,37 +302,7 @@ def main():
     elif args.start:
         print_header()
         print(f"{Fore.CYAN}=== AUTO-LOGIN PROCESS ==={Style.RESET_ALL}\n")
-        
-        if len(credentials) == 0:
-            display_status("No credentials found. Please add credentials first.", "error")
-            return
-                
-        print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}\n")
-        count = 0
-        cred_index = 0
-        
-        try:
-            while True:
-                count += 1
-                duration = (count-1) * 2
-                
-                print(f"\n{Fore.CYAN}Login attempt {count}{Style.RESET_ALL}")
-                if count > 1:
-                    print(f"{Fore.BLUE}Running for {format_time(duration)}...{Style.RESET_ALL}\n")
-                
-                stop, cred_index = module.login(credential_manager.get_credentials())
-                if stop:
-                    if len(credentials) == 0:
-                        display_status("No credentials found.", "error")
-                    else:
-                        module.logout(credential_manager.get_credentials()[cred_index])
-                        display_status("Auto-login stopped.", "warning")
-                    break
-        except KeyboardInterrupt:
-            print()
-            display_status("Auto-login interrupted by user.", "warning")
-            if cred_index is not None and 0 <= cred_index < len(credentials):
-                module.logout(credentials[cred_index])
+        run_auto_login(credential_manager)
         return
     
     # If no command line arguments provided, run the interactive menu loop
@@ -220,37 +327,7 @@ def main():
         elif choice == "2":
             print_header()
             print(f"{Fore.CYAN}=== AUTO-LOGIN PROCESS ==={Style.RESET_ALL}\n")
-            
-            if len(credentials) == 0:
-                display_status("No credentials found. Please add credentials first.", "error")
-                continue
-                
-            print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}\n")
-            count = 0
-            cred_index = 0
-            
-            try:
-                while True:
-                    count += 1
-                    duration = (count-1) * 2
-                    
-                    print(f"\n{Fore.CYAN}Login attempt {count}{Style.RESET_ALL}")
-                    if count > 1:
-                        print(f"{Fore.BLUE}Running for {format_time(duration)}...{Style.RESET_ALL}\n")
-                    
-                    stop, cred_index = module.login(credential_manager.get_credentials())
-                    if stop:
-                        if len(credentials) == 0:
-                            display_status("No credentials found.", "error")
-                        else:
-                            module.logout(credential_manager.get_credentials()[cred_index])
-                            display_status("Auto-login stopped.", "warning")
-                        break
-            except KeyboardInterrupt:
-                print()
-                display_status("Auto-login interrupted by user.", "warning")
-                if cred_index is not None and 0 <= cred_index < len(credentials):
-                    module.logout(credentials[cred_index])
+            run_auto_login(credential_manager)
         
         elif choice == "3":
             print_header()

@@ -14,6 +14,7 @@ This Python script automates the login process for an internet web authenticatio
 - **CSV Import/Export**: Easily import/export credentials to/from a CSV file.
 - **Auto-Logout Handling**: Ensures seamless reconnection by automatically logging in when disconnected.
 - **Cross-Platform Compatibility**: Works on both Windows and Unix-based systems.
+- **Daemon Mode**: Run the auto-login process in the background (Unix-like systems only).
 
 ## Prerequisites
 
@@ -43,11 +44,34 @@ The script supports the following command-line arguments:
 - `--export [path]`: Export credentials to a CSV file (optional path).
 - `--import [path]`: Import credentials from a CSV file.
 - `--show`: Display all stored credentials.
+- `--daemon`: Run the auto-login process in background mode (must be used with `--start`).
 
 Example:
 
 ```shell
 python autologin_script.py --start
+```
+
+To run in daemon mode (background process):
+
+```shell
+python autologin_script.py --start --daemon
+```
+
+### Daemon Mode
+
+The daemon mode allows you to run the auto-login process in the background without keeping a terminal window open. This feature is only available on Unix-like systems (Linux, macOS) and requires the `--start` flag.
+
+When running in daemon mode:
+
+- The process detaches from the terminal and runs in the background
+- All output is redirected to a log file in `~/.sophos-autologin/sophos-autologin.log`
+- A PID file is created at `~/.sophos-autologin/sophos-autologin.pid`
+
+To stop the daemon process, you can use the following command to find and kill the process:
+
+```shell
+kill $(cat ~/.sophos-autologin/sophos-autologin.pid)
 ```
 
 ### Interactive Menu
@@ -138,3 +162,4 @@ This will create an executable file in the `dist` directory:
 - The SQLite database is automatically created and managed by the script.
 - Ensure you have valid credentials stored in the database before starting the auto-login process.
 - The script handles interruptions (e.g., Ctrl+C) gracefully and logs out active sessions before exiting.
+- When running in daemon mode, check the log file for status updates and error messages.
