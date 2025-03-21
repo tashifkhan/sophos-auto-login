@@ -10,4 +10,6 @@ def exit_handler(cred_index: int | None, credentials: Creditial, signal=None, fr
             logout(cred)
     else:
         logout(credentials[cred_index])
-    sys.exit(0)
+    # Only call sys.exit(0) if not invoked as an atexit callback.
+    if signal is not None or frame is not None:
+        sys.exit(0)
