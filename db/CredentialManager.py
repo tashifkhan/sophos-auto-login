@@ -74,21 +74,38 @@ class CredentialManger:
                 current_password = cursor.fetchone()[0]
                 
                 print(f"Editing credentials for: {username}")
-                print(f"Current password: {current_password}")
                 
+                new_username = input(f"Enter new username (leave empty to keep '{username}'): ")
+                print(f"Current password: {current_password}")
                 new_password = getpass("Enter new password (leave empty to keep current): ")
+                
+                changes_made = False
+                
+                if new_username and new_username != username:
+                    try:
+                        cursor.execute("UPDATE credentials SET username = ? WHERE id = ?", 
+                                     (new_username, user_id))
+                        username = new_username
+                        changes_made = True
+                        print("Username updated successfully!")
+                    except sqlite3.IntegrityError:
+                        print("Error: That username already exists! Username not updated.")
                 
                 if new_password:
                     cursor.execute("UPDATE credentials SET password = ? WHERE id = ?", 
-                                  (new_password, user_id))
-                    conn.commit()
+                                 (new_password, user_id))
+                    current_password = new_password
+                    changes_made = True
                     print("Password updated successfully!")
+                
+                if changes_made:
+                    conn.commit()
                 else:
-                    print("Password unchanged.")
+                    print("No changes made.")
                 
                 return {
                     'username': username,
-                    'password': new_password if new_password else current_password
+                    'password': current_password
                 }
                 
             except (ValueError, IndexError):
