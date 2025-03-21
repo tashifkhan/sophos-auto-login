@@ -38,9 +38,10 @@ def print_menu():
     print(f"{Fore.GREEN}[4]{Style.RESET_ALL} Delete credentials")
     print(f"{Fore.GREEN}[5]{Style.RESET_ALL} Export credentials to CSV")
     print(f"{Fore.GREEN}[6]{Style.RESET_ALL} Import credentials from CSV")
-    print(f"{Fore.GREEN}[7]{Style.RESET_ALL} Exit")
+    print(f"{Fore.GREEN}[7]{Style.RESET_ALL} Show stored credentials")
+    print(f"{Fore.GREEN}[8]{Style.RESET_ALL} Exit")
     
-    return input(f"\n{Fore.YELLOW}Enter your choice (1-7): {Style.RESET_ALL}")
+    return input(f"\n{Fore.YELLOW}Enter your choice (1-8): {Style.RESET_ALL}")
 
 def display_status(message, status_type="info"):
     """Display a formatted status message."""
@@ -295,6 +296,24 @@ def main():
                 display_status(f"File not found: {csv_path}", "error")
         
         elif choice == "7":
+            print_header()
+            print(f"{Fore.CYAN}=== STORED CREDENTIALS ==={Style.RESET_ALL}\n")
+            
+            if len(credentials) == 0:
+                display_status("No credentials found.", "warning")
+                continue
+                
+            print(f"{Fore.YELLOW}{'ID':^5} | {'Username':^20} | {'Password':^15} |{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}{'-'*5:^5} | {'-'*20:^20} | {'-'*15:^15} |{Style.RESET_ALL}")
+            
+            for i, cred in enumerate(credentials):
+                print(f"{Fore.GREEN}{i+1:^5} | {cred['username']:^20} | {cred['password']:^15} |{Style.RESET_ALL}")
+                
+            print()
+            display_status(f"Total credentials: {len(credentials)}", "info")
+            input(f"\n{Fore.CYAN}Press Enter to return to the main menu...{Style.RESET_ALL}")
+        
+        elif choice == "8":
             display_status("Exiting...", "warning")
             creds = credential_manager.get_credentials()
             if cred_index is None or not (0 <= cred_index < len(creds)):
