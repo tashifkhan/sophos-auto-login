@@ -146,7 +146,7 @@ class CredentialManger:
                 records_added = 0
                 records_skipped = 0
 
-                with sqlite3.connect(db_path) as conn:
+                with sqlite3.connect(self.db_path) as conn:
                     cursor = conn.cursor()
                     for row in reader:
                         try:
