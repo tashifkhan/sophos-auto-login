@@ -1,10 +1,10 @@
 env
 test
 databae.db
-credentials.db
 encryption.key
 __pycache__
 build
 dist
+autologin_script.spec
 
 .DS_Store

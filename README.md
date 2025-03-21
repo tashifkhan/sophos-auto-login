@@ -146,7 +146,8 @@ pip install pyinstaller
 4. Create the executable:
 
 ```shell
-pyinstaller --onefile autologin_script.py
+pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py # MacOS / Linux
+pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py # Windows
 ```
 
 This will create an executable file in the `dist` directory:

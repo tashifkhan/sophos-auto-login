@@ -1,12 +1,22 @@
 import sqlite3
 import os
+import sys
 from getpass import getpass
 import csv
 
-class CredentialManger:
-    def __init__(self, db_path = os.path.join(os.path.dirname(__file__), "credentials.db")):
-        self.db_path = db_path
+class CredentialManger: 
+    def __init__(self, db_path=None):
+        self.db_path = db_path if db_path else self.get_db_path()
         self.setup_database()
+    
+    def get_db_path(self):
+        """Get the correct database path based on execution context."""
+        if getattr(sys, 'frozen', False):  # Running as a PyInstaller EXE
+            base_dir = sys._MEIPASS  # PyInstaller's temp directory
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))  # Normal script directory
+        
+        return os.path.join(base_dir, "credentials.db")
 
     def setup_database(self):
         with sqlite3.connect(self.db_path) as conn:
