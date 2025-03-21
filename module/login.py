@@ -6,6 +6,10 @@ import os
 
 def login(credentials: list[Creditial]) -> tuple[bool, int]:
     cred_index = 0
+    if len(credentials) == 0:
+        print("No credentials found.")
+        return True, cred_index
+
     for cred in credentials:
         username = cred['username']
         password = cred['password']

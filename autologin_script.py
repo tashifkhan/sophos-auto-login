@@ -40,11 +40,20 @@ def main():
                 
                 stop, cred_index = module.login(credential_manager.get_credentials())
                 if stop:
-                    module.logout(credential_manager.get_credentials()[cred_index])
+                    if len(credentials) == 0:
+                        print("No credentials found.")
+                    else:
+                        module.logout(credential_manager.get_credentials()[cred_index])
                     break
         elif choice == "3":
             print("Exiting...")
-            module.logout(credential_manager.get_credentials()[cred_index])
+            creds = credential_manager.get_credentials()
+            if cred_index is None or not (0 <= cred_index < len(creds)):
+                print("Invalid or unspecified credential index, logging out all credentials")
+                for cred in creds:
+                    module.logout(cred)
+            else:
+                module.logout(creds[cred_index])
             break
         else:
             print("Invalid choice. Please try again.")
