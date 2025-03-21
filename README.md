@@ -155,8 +155,6 @@ This will create an executable file in the `dist` directory:
 ./dist/autologin_script
 ```
 
-**Note:** Ensure the SQLite database is in the same directory as the executable or update the script to use an absolute path.
-
 ## Additional Notes
 
 - The SQLite database is automatically created and managed by the script.
