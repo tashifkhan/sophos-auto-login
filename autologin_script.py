@@ -1,10 +1,19 @@
 import db.CredentialManager as CredManager
 import module
+import atexit
+import signal
 
 def main():
     credential_manager = CredManager.CredentialManger()
+    cred_index = 0
+    credentials = credential_manager.get_credentials()
+    runing = True
     
-    while True:
+    while runing:
+        signal.signal ( signal.SIGINT, 
+                        lambda sig, frame: 
+                            module.exit_handler(cred_index, credentials, sig, frame)
+                      )
         print("\n1. Add new login credentials")
         print("2. Start auto-login process")
         print("3. Exit")
@@ -29,14 +38,24 @@ def main():
                     else:
                         print(f"Running for {hrs} hours {mins} minutes...\n")
                 
-                retry, cred_index = module.login(credential_manager.get_credentials())
-                if not retry:
+                stop, cred_index = module.login(credential_manager.get_credentials())
+                if stop:
+                    module.logout(credential_manager.get_credentials()[cred_index])
                     break
         elif choice == "3":
             print("Exiting...")
+            module.logout(credential_manager.get_credentials()[cred_index])
             break
         else:
             print("Invalid choice. Please try again.")
+            if cred_index:
+                module.logout(credential_manager.get_credentials()[cred_index])
+
+    if not runing:
+        print("Exiting...")
+        module.exit_handler(credential_manager.get_credentials(), cred_index)
+    
+    atexit.register(lambda: module.exit_handler(cred_index, credentials))
 
 if __name__ == "__main__":
     main()
