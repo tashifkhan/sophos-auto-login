@@ -38,7 +38,7 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
                         os.system("clear")
                         return False, cred_index
                     else:
-                        print("Unknown response:", message_text)
+                        print("Unknown response:", message_text, "\nusername:", username)
                 else:
                     print("Message element not found.")
             else:
