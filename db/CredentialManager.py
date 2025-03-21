@@ -95,6 +95,48 @@ class CredentialManger:
                 print("Invalid selection. Please try again.")
                 return None
 
+    def delete_credential(self):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT id, username FROM credentials")
+            users = cursor.fetchall()
+            
+            if not users:
+                print("No credentials found to delete.")
+                return False
+            
+            print("Available users:")
+            for i, (_, username) in enumerate(users, 1):
+                print(f"{i}. {username}")
+            
+            try:
+                selection = int(input("Select a user to delete (number) or 0 to cancel: "))
+                if selection == 0:
+                    print("Deletion cancelled.")
+                    return False
+                    
+                if selection < 1 or selection > len(users):
+                    print("Invalid selection.")
+                    return False
+                
+                user_id, username = users[selection-1]
+                
+                confirm = input(f"Are you sure you want to delete credentials for '{username}'? (y/n): ").lower()
+                if confirm != 'y':
+                    print("Deletion cancelled.")
+                    return False
+                
+                cursor.execute("DELETE FROM credentials WHERE id = ?", (user_id,))
+                conn.commit()
+                
+                print(f"Credentials for '{username}' deleted successfully!")
+                return True
+                
+            except (ValueError, IndexError):
+                print("Invalid selection. Please try again.")
+                return False
+
     def export_to_csv(self, output_path=None):
         
         if not output_path:
