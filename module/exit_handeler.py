@@ -9,5 +9,5 @@ def exit_handler(credentials: Creditial, cred_index: int | None = None,  signal=
         for cred in credentials:
             logout(cred)
     else:
-        logout(cred_index[cred_index])
+        logout(credentials[cred_index])
     sys.exit(0)
