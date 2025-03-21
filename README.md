@@ -98,15 +98,28 @@ python3 autologin_script.py
 
 ## Creating an Executable
 
-To create an executable from the Python script, you can use tools like PyInstaller. PyInstaller bundles the Python script and its dependencies into a standalone executable.
+To create an executable from the Python script, follow these steps:
 
-### Install PyInstaller
+1. Clone the repository and navigate to the project directory:
+
+```shell
+git clone https://github.com/your-repo/sophos-auto-login.git
+cd sophos-auto-login
+```
+
+2. Install the required dependencies:
+
+```shell
+pip install -r requirements.txt
+```
+
+3. Install PyInstaller:
 
 ```shell
 pip install pyinstaller
 ```
 
-### Create the Executable
+4. Create the executable:
 
 ```shell
 pyinstaller --onefile autologin_script.py
