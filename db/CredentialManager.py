@@ -63,7 +63,7 @@ class CredentialManger:
                 print(f"{i}. {username}")
             
             try:
-                selection = int(input("Select a user to edit (number): "))
+                selection = int(input("\nSelect a user to edit (number): "))
                 if selection < 1 or selection > len(users):
                     print("Invalid selection.")
                     return None
@@ -73,11 +73,11 @@ class CredentialManger:
                 cursor.execute("SELECT password FROM credentials WHERE id = ?", (user_id,))
                 current_password = cursor.fetchone()[0]
                 
-                print(f"Editing credentials for: {username}")
+                print(f"\nEditing credentials for: {username}")
                 
                 new_username = input(f"Enter new username (leave empty to keep '{username}'): ")
-                print(f"Current password: {current_password}")
-                new_password = getpass("Enter new password (leave empty to keep current): ")
+                print(f"\nCurrent password: {current_password}")
+                new_password = getpass("\nEnter new password (leave empty to keep current): ")
                 
                 changes_made = False
                 
