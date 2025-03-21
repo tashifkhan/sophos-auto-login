@@ -150,6 +150,11 @@ pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py # Mac
 pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py # Windows
 ```
 
+5. Signing th execytables: (only for MacOS / Linux)
+```
+chmod +x dist/autologin_script
+```
+
 This will create an executable file in the `dist` directory:
 
 ```shell
