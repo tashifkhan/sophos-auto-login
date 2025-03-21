@@ -11,6 +11,7 @@ from getpass import getpass
 import os
 import threading
 import time
+import module
 
 class CredentialManager:
     def __init__(self, db_path="credentials.db"):
