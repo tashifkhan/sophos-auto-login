@@ -24,7 +24,18 @@ jobs:
           python-version: "3.13.1"
 
       - name: Install Dependencies
-        run: pip install pyinstaller
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Create DB Directory and Check for Credentials DB
+        run: |
+          mkdir -p db
+          if [ ! -f "db/credentials.db" ]; then
+            echo "Creating empty credentials.db file"
+            python -c "import sqlite3; conn = sqlite3.connect('db/credentials.db'); conn.execute('CREATE TABLE IF NOT EXISTS credentials (username TEXT, password TEXT)'); conn.close()"
+          fi
+        shell: bash
 
       - name: Build Executable (Linux/macOS)
         if: runner.os != 'Windows'
@@ -32,7 +43,14 @@ jobs:
 
       - name: Build Executable (Windows)
         if: runner.os == 'Windows'
-        run: pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py
+        run: |
+          mkdir -p db
+          if (-not (Test-Path -Path "db\credentials.db")) {
+            echo "Creating empty credentials.db file"
+            python -c "import sqlite3; conn = sqlite3.connect('db/credentials.db'); conn.execute('CREATE TABLE IF NOT EXISTS credentials (username TEXT, password TEXT)'); conn.close()"
+          }
+          pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py
+        shell: pwsh
 
       - name: Rename Executable
         run: |
