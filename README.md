@@ -16,22 +16,20 @@ This Python script automates the login process for an internet web authenticatio
 - **Cross-Platform Compatibility**: Works on both Windows and Unix-based systems.
 - **Daemon Mode**: Run the auto-login process in the background (Unix-like systems only).
 
-## Prerequisites
-
-Before running the program, ensure you have the following libraries installed:
-
-- `requests`
-- `lxml`
-- `sqlite3` (built into Python)
-- `colorama`
-
-You can install the required libraries using pip:
-
-```shell
-pip install -r requirements.txt
-```
-
 ## Usage
+
+### Quick Start with Pre-built Executable
+
+You can download the latest pre-built executable directly from the [Releases](https://github.com/tashifkhan/sophos-auto-login/releases) section without needing to install Python or any dependencies:
+
+1. Go to the Releases section on GitHub
+2. Download the executable for your operating system (Windows, macOS, or Linux)
+3. Run the downloaded file:
+   - **Windows**: Double-click the `autologin_script.exe` file
+   - **macOS**: Open Terminal, navigate to the download location and run `chmod +x autologin_script && ./autologin_script`
+   - **Linux**: Open Terminal, navigate to the download location and run `chmod +x autologin_script && ./autologin_script`
+
+The executable contains all necessary dependencies and doesn't require any additional installation steps.
 
 ### Command-Line Arguments
 
@@ -106,6 +104,21 @@ The script automatically switches to the next available ID in the database if:
 
 This ensures uninterrupted connectivity.
 
+## Prerequisites
+
+Before running the program, ensure you have the following libraries installed:
+
+- `requests`
+- `lxml`
+- `sqlite3` (built into Python)
+- `colorama`
+
+You can install the required libraries using pip:
+
+```shell
+pip install -r requirements.txt
+```
+
 ## Running the Program
 
 To run the program, execute the Python script using your preferred Python interpreter:
@@ -151,6 +164,7 @@ pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py # Win
 ```
 
 5. Signing th execytables: (only for MacOS / Linux)
+
 ```
 chmod +x dist/autologin_script
 ```
