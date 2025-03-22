@@ -26,8 +26,10 @@ You can download the latest pre-built executable directly from the [Releases](ht
 2. Download the executable for your operating system (Windows, macOS, or Linux)
 3. Run the downloaded file:
    - **Windows**: Double-click the `autologin_script.exe` file
-   - **macOS**: Open Terminal, navigate to the download location and run `chmod +x autologin_script && ./autologin_script`
-   - **Linux**: Open Terminal, navigate to the download location and run `chmod +x autologin_script && ./autologin_script`
+   - **macOS**:
+     - Option 1: Remove the quarantine attribute by opening Terminal, navigating to the download location, and running `xattr -d com.apple.quarantine autologin_script-mac` before executing it
+     - Option 2: Right-click on the file, select "Open" from the context menu, then confirm the security dialog that appears. Alternatively, go to System Settings > Privacy & Security and click "Allow" for the blocked application
+   - **Linux**: Open Terminal, navigate to the download location and run `./autologin_script-linux`
 
 The executable contains all necessary dependencies and doesn't require any additional installation steps.
 
@@ -163,17 +165,7 @@ pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py # Mac
 pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py # Windows
 ```
 
-5. Signing th execytables: (only for MacOS / Linux)
-
-```
-chmod +x dist/autologin_script
-```
-
-This will create an executable file in the `dist` directory:
-
-```shell
-./dist/autologin_script
-```
+This will create an executable file in the `dist` directory that you can run directly.
 
 ## Additional Notes
 
