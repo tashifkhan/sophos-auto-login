@@ -30,7 +30,6 @@ jobs:
 
       - name: Create DB Directory and Check for Credentials DB
         run: |
-          mkdir -p db
           if [ ! -f "db/credentials.db" ]; then
             echo "Creating empty credentials.db file"
             python -c "import sqlite3; conn = sqlite3.connect('db/credentials.db'); conn.execute('CREATE TABLE IF NOT EXISTS credentials (username TEXT, password TEXT)'); conn.close()"
@@ -44,7 +43,6 @@ jobs:
       - name: Build Executable (Windows)
         if: runner.os == 'Windows'
         run: |
-          mkdir -p db
           if (-not (Test-Path -Path "db\credentials.db")) {
             echo "Creating empty credentials.db file"
             python -c "import sqlite3; conn = sqlite3.connect('db/credentials.db'); conn.execute('CREATE TABLE IF NOT EXISTS credentials (username TEXT, password TEXT)'); conn.close()"
