@@ -27,9 +27,12 @@ You can download the latest pre-built executable directly from the [Releases](ht
 3. Run the downloaded file:
    - **Windows**: Double-click the `autologin_script.exe` file
    - **macOS**:
-     - Option 1: Remove the quarantine attribute by opening Terminal, navigating to the download location, and running `xattr -d com.apple.quarantine autologin_script-mac` before executing it
-     - Option 2: Right-click on the file, select "Open" from the context menu, then confirm the security dialog that appears. Alternatively, go to System Settings > Privacy & Security and click "Allow" for the blocked application
-   - **Linux**: Open Terminal, navigate to the download location and run `./autologin_script-linux`
+     - Extract the downloaded .zip file
+     - Option 1: Remove the quarantine attribute by opening Terminal, navigating to the extraction location, and running `xattr -d com.apple.quarantine autologin_script-mac` before executing it
+     - Option 2: Right-click on the extracted file, select "Open" from the context menu, then confirm the security dialog that appears. Alternatively, go to System Settings > Privacy & Security and click "Allow" for the blocked application
+   - **Linux**:
+     - Extract the downloaded .zip file
+     - Open Terminal, navigate to the extraction location and run `./autologin_script-linux`
 
 The executable contains all necessary dependencies and doesn't require any additional installation steps.
 
