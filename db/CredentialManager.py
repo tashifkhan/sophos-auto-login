@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import sys
+import shutil
 from getpass import getpass
 import csv
 
@@ -11,12 +12,29 @@ class CredentialManger:
     
     def get_db_path(self):
         """Get the correct database path based on execution context."""
+        # Determine base directory based on how the app is run
         if getattr(sys, 'frozen', False):  # Running as a PyInstaller EXE
-            base_dir = sys._MEIPASS  # PyInstaller's temp directory
+            base_dir = os.path.dirname(sys.executable)  # Path to executable
         else:
             base_dir = os.path.dirname(os.path.abspath(__file__))  # Normal script directory
         
-        return os.path.join(base_dir, "credentials.db")
+        # Choose a persistent storage location based on OS
+        if sys.platform == "win32":
+            persistent_db_path = os.path.join(os.getenv("APPDATA"), "autologin_script", "credentials.db")
+        else:
+            persistent_db_path = os.path.expanduser("~/.autologin_script/credentials.db")
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(persistent_db_path), exist_ok=True)
+        
+        # Define the source database path
+        source_db_path = os.path.join(base_dir, "credentials.db")
+        
+        # Copy the database only if it doesn't already exist (to avoid overwriting)
+        if not os.path.exists(persistent_db_path) and os.path.exists(source_db_path):
+            shutil.copy(source_db_path, persistent_db_path)
+        
+        return persistent_db_path
 
     def setup_database(self):
         with sqlite3.connect(self.db_path) as conn:
