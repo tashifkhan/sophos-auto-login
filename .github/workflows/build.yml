@@ -38,7 +38,9 @@ jobs:
 
       - name: Build Executable (Linux/macOS)
         if: runner.os != 'Windows'
-        run: pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py
+        run: |
+          pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py
+          chmod +x dist/autologin_script
 
       - name: Build Executable (Windows)
         if: runner.os == 'Windows'
