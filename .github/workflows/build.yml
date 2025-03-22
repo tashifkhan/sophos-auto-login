@@ -1,0 +1,66 @@
+name: Build and Release Executables
+
+on:
+  push:
+    tags:
+      - "v*" # Trigger when pushing a tag like v1.0.0
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest] # Builds for Linux, macOS, Windows
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13.1"
+
+      - name: Install Dependencies
+        run: pip install pyinstaller
+
+      - name: Build Executable (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py
+
+      - name: Build Executable (Windows)
+        if: runner.os == 'Windows'
+        run: pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py
+
+      - name: Rename Executable
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then mv dist/autologin_script dist/autologin_script-linux; fi
+          if [ "$RUNNER_OS" == "macOS" ]; then mv dist/autologin_script dist/autologin_script-mac; fi
+        shell: bash
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: autologin_script-${{ runner.os }}
+          path: dist/*
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build # Run after the build job
+
+    steps:
+      - name: Download all Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/**/*
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
