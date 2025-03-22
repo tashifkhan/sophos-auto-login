@@ -52,7 +52,21 @@ jobs:
           pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py
         shell: pwsh
 
-      - name: Rename Executable
+      - name: Create Zip Archives (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p zip_dist
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            cp dist/autologin_script zip_dist/autologin_script
+            cd zip_dist && zip -r ../dist/autologin_script-linux.zip autologin_script
+          fi
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            cp dist/autologin_script zip_dist/autologin_script
+            cd zip_dist && zip -r ../dist/autologin_script-mac.zip autologin_script
+          fi
+        shell: bash
+
+      - name: Rename Executables (for direct download)
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then mv dist/autologin_script dist/autologin_script-linux; fi
           if [ "$RUNNER_OS" == "macOS" ]; then mv dist/autologin_script dist/autologin_script-mac; fi
