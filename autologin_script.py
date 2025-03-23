@@ -92,7 +92,7 @@ def daemonize():
 
 def run_auto_login(credential_manager, daemon_mode=False):
     credentials = credential_manager.get_credentials()
-    cred_index = 0
+    cred_index = None
     
     if len(credentials) == 0:
         if daemon_mode:
@@ -112,7 +112,7 @@ def run_auto_login(credential_manager, daemon_mode=False):
     try:
         while True:
             count += 1
-            duration = (count-1) * 2  # Fixed: Changed 'X2' to '2'
+            duration = (count-1) * 2  
             
             if not daemon_mode:
                 print(f"\n{Fore.CYAN}Login attempt {count}{Style.RESET_ALL}")
@@ -200,7 +200,7 @@ def main():
     args = parse_arguments()
     
     credential_manager = CredManager.CredentialManger()
-    cred_index = 0
+    cred_index = None
     credentials = credential_manager.get_credentials()
     running = True
 
