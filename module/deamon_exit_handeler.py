@@ -1,6 +1,7 @@
 import subprocess
 import sys
 
+# General purpose script to kill processes for any progarm
 def find_autologin_pids():
     """
     Run 'ps aux' and filter for lines containing 'autologin'
@@ -40,6 +41,26 @@ def kill_processes(pids):
         print("Processes killed successfully.")
     except subprocess.CalledProcessError as error:
         print("Error killing processes:", error)
+
+# Forgot was storing PID in ~/.sophos-autologin/sophos-autologin.pid
+def stop_sophos():
+    """
+    Stop the Sophos autologin process by killing it.
+    """
+    pid_file = "~/.sophos-autologin/sophos-autologin.pid"
+    try:
+        with open(pid_file, "r") as file:
+            pid = file.read().strip()
+            print(f"Stopping Sophos autologin process with PID: {pid}")
+            subprocess.run(["kill", pid], check=True)
+            print("Sophos autologin process stopped successfully.")
+    except FileNotFoundError:
+        print(f"PID file not found: {pid_file}")
+    except subprocess.CalledProcessError as error:
+        print("Error stopping Sophos autologin process:", error)
+
+# but will the general purpose ?
+# coz that shit aso exits the non deamon ones too
 
 def main():
     pids = find_autologin_pids()
