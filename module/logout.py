@@ -1,8 +1,10 @@
 import requests
 import xml.etree.ElementTree as ET
-from ..types.Credentials import Creditial
+from ..types.Credentials import Credential  # Fixed typo in class name
+import sys
+from .mac_notification import send_notification as mac_notification
 
-def logout(credential : Creditial) -> bool | None:
+def logout(credential : Credential) -> bool | None:  # Fixed type annotation
 
     username = credential["username"]
     password = credential["password"]
@@ -26,9 +28,13 @@ def logout(credential : Creditial) -> bool | None:
                 message_text = message_element.text
                 if message_text == "You&#39;ve signed out":
                     print(f"Logged out {username}")
+                    if sys.platform == "darwin":
+                        mac_notification("Sophos Auto Login", f"{username} have been logged out")
                     return True
             else:
                 print("Message element not found.")
+                if sys.platform == "darwin":
+                    mac_notification("Sophos Auto Login", f"Error logging out {username}")
                 return False
         else:
             print("Error Response:", p)
