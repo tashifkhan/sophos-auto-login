@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument('--import', dest='import_csv', type=str, help='Import credentials from CSV file')
     parser.add_argument('--show', action='store_true', help='Display all stored credentials')
     parser.add_argument('--daemon', action='store_true', help='Run auto-login process in background (daemon mode)')
+    parser.add_argument('--exit', action='store_true', help='Exit the daemon process and logout all credentials')
     
     return parser.parse_args()
 
@@ -203,6 +204,24 @@ def main():
     cred_index = None
     credentials = credential_manager.get_credentials()
     running = True
+
+    if args.exit:
+        print_header()
+        print(f"{Fore.CYAN}=== STOPPING DAEMON PROCESS ==={Style.RESET_ALL}\n")
+
+        display_status("Exiting...", "warning")
+        creds = credential_manager.get_credentials()
+        if cred_index is None or not (0 <= cred_index < len(creds)):
+            print("Logging out all credentials...")
+            for cred in creds:
+                module.logout(cred)
+        else:
+            print(f"Logging out credential: {creds[cred_index]['username']}")
+            module.logout(creds[cred_index])
+        running = False
+
+        if not sys.platform.startswith('win'):
+            module.deamon_exit()
 
     # Handle daemon mode
     if args.daemon:
