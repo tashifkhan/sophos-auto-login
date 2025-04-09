@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-from .Credentials import Creditial
+from ..types.Credentials import Creditial
 
 def logout(credential : Creditial) -> bool | None:
 

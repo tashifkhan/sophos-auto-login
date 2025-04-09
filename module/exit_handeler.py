@@ -1,5 +1,5 @@
 import sys
-from .Credentials import Creditial
+from ..types.Credentials import Creditial
 from .logout import logout
 
 def exit_handler(cred_index: int | None, credentials: Creditial, signal=None, frame=None):

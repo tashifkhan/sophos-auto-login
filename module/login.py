@@ -1,5 +1,5 @@
 import requests
-from .Credentials import Creditial
+from ..types.Credentials import Creditial
 import xml.etree.ElementTree as ET
 import time
 import os
