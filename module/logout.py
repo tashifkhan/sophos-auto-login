@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-from ..types.Credentials import Credential  # Fixed typo in class name
+from module.Credentials import Credential
 import sys
 from .mac_notification import send_notification as mac_notification
 
