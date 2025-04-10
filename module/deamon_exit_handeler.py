@@ -1,3 +1,4 @@
+from .notification_handler import send_notification
 import subprocess
 import sys
 import os
@@ -65,6 +66,7 @@ def stop_sophos():
 
 def main():
     pids = find_autologin_pids()
+    send_notification("Sophos Auto Login", "Daemon terminated")
     kill_processes(pids)
 
 if __name__ == "__main__":

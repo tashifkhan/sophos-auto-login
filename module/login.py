@@ -1,5 +1,6 @@
 import requests
 from module.Credentials import Creditial
+from .notification_handler import send_notification
 import xml.etree.ElementTree as ET
 import time
 import os
@@ -32,6 +33,7 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
                     if (message_text == 'Login failed. You have reached the maximum login limit.' or
                         message_text == 'Your data transfer has been exceeded, Please contact the administrator'):
                         print(f'Login failed for {username}. Trying the next credentials.\n')
+                        send_notification("Sophos Auto Login", f"{username} login failed")
                     elif message_text == "You are signed in as {username}":
                         print(f"Success\nConnected using {username}!\n")
                         time.sleep(2*60)
@@ -39,10 +41,13 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
                         return False, cred_index
                     else:
                         print("Unknown response:", message_text, "\nusername:", username)
+                        send_notification("Sophos Auto Login", f"Unknown response for {username}")
                 else:
                     print("Message element not found.")
+                    send_notification("Sophos Auto Login", f"Error {username} - {"Message element not found."}")
             else:
                 print("Error Response:", p)
+                send_notification("Sophos Auto Login", f"Error {username} - {p}")
         cred_index += 1
 
     print("All login attempts failed.")
