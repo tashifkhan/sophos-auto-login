@@ -15,6 +15,8 @@ This Python script automates the login process for an internet web authenticatio
 - **Auto-Logout Handling**: Ensures seamless reconnection by automatically logging in when disconnected.
 - **Cross-Platform Compatibility**: Works on both Windows and Unix-based systems.
 - **Daemon Mode**: Run the auto-login process in the background (Unix-like systems only).
+- **Connection Check**: Periodically checks for internet connectivity and logs in if disconnected.
+- **Scheduled Re-login**: Performs a scheduled re-login every 30 minutes to maintain connection.
 
 ## Usage
 
@@ -40,25 +42,32 @@ The executable contains all necessary dependencies and doesn't require any addit
 
 The script supports the following command-line arguments:
 
-- `--start`: Start the auto-login process immediately.
-- `--add`: Add new credentials to the database.
-- `--edit`: Edit existing credentials.
-- `--delete`: Delete credentials from the database.
-- `--export [path]`: Export credentials to a CSV file (optional path).
-- `--import [path]`: Import credentials from a CSV file.
-- `--show`: Display all stored credentials.
-- `--daemon`: Run the auto-login process in background mode (must be used with `--start`).
+- `--start` or `-s`: Start the auto-login process immediately.
+- `--add` or `-a`: Add new credentials to the database.
+- `--edit` or `-e`: Edit existing credentials.
+- `--delete` or `-del`: Delete credentials from the database.
+- `--export [path]` or `-x [path]`: Export credentials to a CSV file (optional path). If no path is provided, it exports to a default `credentials.csv` file in the same directory as the database.
+- `--import [path]` or `-i [path]`: Import credentials from a CSV file.
+- `--show` or `-l`: Display all stored credentials.
+- `--daemon` or `-d`: Run the auto-login process in background mode (must be used with `--start`).
+- `--exit` or `-q`: Stop the daemon process and logout all credentials.
 
 Example:
 
 ```shell
-python autologin_script.py --start
+python autologin.py --start
 ```
 
 To run in daemon mode (background process):
 
 ```shell
-python autologin_script.py --start --daemon
+python autologin.py --start --daemon
+```
+
+To stop the daemon process:
+
+```shell
+python autologin.py --exit
 ```
 
 ### Daemon Mode
@@ -67,11 +76,17 @@ The daemon mode allows you to run the auto-login process in the background witho
 
 When running in daemon mode:
 
-- The process detaches from the terminal and runs in the background
-- All output is redirected to a log file in `~/.sophos-autologin/sophos-autologin.log`
-- A PID file is created at `~/.sophos-autologin/sophos-autologin.pid`
+- The process detaches from the terminal and runs in the background.
+- All output is redirected to a log file in `~/.sophos-autologin/sophos-autologin.log`.
+- A PID file is created at `~/.sophos-autologin/sophos-autologin.pid`.
 
-To stop the daemon process, you can use the following command to find and kill the process:
+To stop the daemon process, you can use the `--exit` or `-q` command-line argument:
+
+```shell
+python autologin.py --exit
+```
+
+Alternatively, you can use the following command to find and kill the process:
 
 ```shell
 kill $(cat ~/.sophos-autologin/sophos-autologin.pid)
@@ -97,7 +112,7 @@ If you have previously used the CSV-based version of this script, you can direct
 Example:
 
 ```shell
-python autologin_script.py --import credentials.csv
+python autologin.py --import credentials.csv
 ```
 
 ### Automatic ID Switching
@@ -108,6 +123,14 @@ The script automatically switches to the next available ID in the database if:
 - The current ID fails to log in.
 
 This ensures uninterrupted connectivity.
+
+### Internet Connection Check
+
+The script periodically checks for internet connectivity every 90 seconds. If the internet connection is lost, the script will attempt to log in again using the stored credentials.
+
+### Scheduled Re-login
+
+To ensure continuous connectivity, the script performs a scheduled re-login every 30 minutes, even if the internet connection is active. This helps prevent unexpected disconnections due to session timeouts.
 
 ## Prerequisites
 
@@ -129,13 +152,13 @@ pip install -r requirements.txt
 To run the program, execute the Python script using your preferred Python interpreter:
 
 ```shell
-python autologin_script.py
+python autologin.py
 ```
 
 OR
 
 ```shell
-python3 autologin_script.py
+python3 autologin.py
 ```
 
 ## Creating an Executable
@@ -164,8 +187,8 @@ pip install pyinstaller
 4. Create the executable:
 
 ```shell
-pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py # MacOS / Linux
-pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py # Windows
+pyinstaller --onefile --add-data "db/credentials.db:." autologin.py # MacOS / Linux
+pyinstaller --onefile --add-data "db/credentials.db;." autologin.py # Windows
 ```
 
 This will create an executable file in the `dist` directory that you can run directly.
