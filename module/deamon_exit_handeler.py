@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 
 # General purpose script to kill processes for any progarm
 def find_autologin_pids():
@@ -47,7 +48,7 @@ def stop_sophos():
     """
     Stop the Sophos autologin process by killing it.
     """
-    pid_file = "~/.sophos-autologin/sophos-autologin.pid"
+    pid_file = os.path.expanduser("~/.sophos-autologin/sophos-autologin.pid")
     try:
         with open(pid_file, "r") as file:
             pid = file.read().strip()
