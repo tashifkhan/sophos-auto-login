@@ -1,12 +1,13 @@
-import db.CredentialManager as CredManager
+import os
+import sys
+import time
+import signal
 import module
 import atexit
-import signal
-import os
-import time
-import argparse
-import sys
 import logging
+import datetime
+import argparse
+import db.CredentialManager as CredManager
 from colorama import init, Fore, Back, Style
 
 init(autoreset=True)
@@ -61,7 +62,7 @@ def daemonize():
     sys.stdout.flush()
     sys.stderr.flush()
     
-    # Set up logging for daemon mode
+    # Set up logging for daemon mode with improved format
     log_dir = os.path.expanduser("~/.sophos-autologin")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -70,8 +71,12 @@ def daemonize():
     logging.basicConfig(
         filename=log_file,
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format='%(asctime)s │ %(levelname)-8s │ %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
+    logging.info("╔══════════════════════════════════════════════════════════╗")
+    logging.info("║                 SOPHOS AUTO LOGIN DAEMON                 ║")
+    logging.info("╚══════════════════════════════════════════════════════════╝")
     logging.info("Daemon started")
     
     # Redirect standard file descriptors to /dev/null
@@ -104,44 +109,111 @@ def run_auto_login(credential_manager, daemon_mode=False):
             return
     
     if not daemon_mode:
-        print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}\n")
+        print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}")    
     else:
         module.send_notification("Sophos Auto Login", "Daemon started")
         logging.info("Starting auto-login process in daemon mode")
     
     count = 0
+    last_login_time = time.time()
+    start_time = time.time()
+    
+    CONNECTION_CHECK_INTERVAL = 90 
+    FORCED_RELOGIN_INTERVAL = 30 * 60  
+    last_connection_check = time.time()
+
+    # Initial login attempt
+    stop, cred_index = module.login(credentials)
+    if cred_index is not None and 0 <= cred_index < len(credentials):
+        active_username = credentials[cred_index]['username']
+        if not daemon_mode:
+            display_status(f"Logged in with credential ID #{cred_index+1} ({active_username})", "success")
+        else:
+            logging.info(f"Logged in with credential ID #{cred_index+1} ({active_username})")
     
     try:
         while True:
+            current_time = time.time()
             count += 1
-            duration = (count-1) * 2  
+            running_time_seconds = current_time - start_time
+            running_time_mins = running_time_seconds / 60
+            duration = format_time(int(running_time_mins))
             
-            if not daemon_mode:
-                print(f"\n{Fore.CYAN}Login attempt {count}{Style.RESET_ALL}")
-                if count > 1:
-                    print(f"{Fore.BLUE}Running for {format_time(duration)}...{Style.RESET_ALL}\n")
-            else:
-                logging.info(f"Login attempt {count}. Running for {format_time(duration)}")
-            
-            stop, cred_index = module.login(credentials)
-            if stop:
-                if len(credentials) == 0:
-                    if daemon_mode:
-                        module.send_notification("Sophos Auto Login", "No credentials found. Daemon exiting.")
-                        logging.error("No credentials found. Daemon exiting.")
-                    else:
-                        display_status("No credentials found.", "error")
+            if current_time - last_connection_check >= CONNECTION_CHECK_INTERVAL:
+                has_internet = module.check_internet_connection()
+                last_connection_check = current_time
+                
+                # Log running time with every connection check
+                if not daemon_mode:
+                    status = f"{Fore.GREEN}✓ Connected{Style.RESET_ALL}" if has_internet else f"{Fore.RED}✗ Disconnected{Style.RESET_ALL}"
+                    
+                    print(f"\n{Fore.CYAN}CONNECTION CHECK{Style.RESET_ALL}")
+                    print(f"Status: {status}")
+                    print(f"Runtime: {duration}")
+                    
+                    if cred_index is not None and 0 <= cred_index < len(credentials):
+                        active_username = credentials[cred_index]['username']
+                        print(f"Active: ID #{cred_index+1} ({active_username})")
                 else:
-                    module.logout(credentials[cred_index])
-                    if daemon_mode:
-                        module.send_notification("Sophos Auto Logim",f"Logged out {credentials[cred_index]['username']} & Exiting")
-                        logging.info("Auto-login stopped.")
+                    status = "✓ Connected" if has_internet else "✗ Disconnected"
+                    logging.info(f"CONNECTION CHECK | Status: {status} | Runtime: {duration}")
+                    if cred_index is not None and 0 <= cred_index < len(credentials):
+                        active_username = credentials[cred_index]['username']
+                        logging.info(f"Active credential: ID #{cred_index+1} ({active_username})")
+                
+                force_relogin = current_time - last_login_time >= FORCED_RELOGIN_INTERVAL
+                
+                if has_internet and not force_relogin:
+                    if not daemon_mode:
+                        print(f"{Fore.GREEN}➤ Internet is connected. No login needed.{Style.RESET_ALL}")
                     else:
-                        display_status("Auto-login stopped.", "warning")
-                break
+                        logging.info("➤ Internet is connected. No login needed.")
+                    time.sleep(10)
+                    continue
+                elif force_relogin:
+                    message = "⟳ Performing scheduled re-login"
+                    if not daemon_mode:
+                        print(f"{Fore.YELLOW}\n{message}{Style.RESET_ALL}")
+                    else:
+                        logging.info(message)
+                
+                if (not has_internet) or force_relogin:
+                    if not daemon_mode:
+                        print(f"\n{Fore.CYAN}Login attempt #{count} | Running for: {duration}{Style.RESET_ALL}")
+                    else:
+                        logging.info(f"LOGIN ATTEMPT #{count} | Running for: {duration}")
+                    
+                    stop, cred_index = module.login(credentials)
+                    last_login_time = time.time()
+                    
+                    # Log which credential was used for login
+                    if cred_index is not None and 0 <= cred_index < len(credentials):
+                        active_username = credentials[cred_index]['username']
+                        if not daemon_mode:
+                            display_status(f"Logged in with ID #{cred_index+1} ({active_username})", "success")
+                        else:
+                            logging.info(f"✓ Logged in with credential ID #{cred_index+1} ({active_username})")
+                    
+                    if stop:
+                        if len(credentials) == 0:
+                            if daemon_mode:
+                                module.send_notification("Sophos Auto Login", "No credentials found. Daemon exiting.")
+                                logging.error("No credentials found. Daemon exiting.")
+                            else:
+                                display_status("No credentials found.", "error")
+                        else:
+                            module.logout(credentials[cred_index])
+                            if daemon_mode:
+                                module.send_notification("Sophos Auto Login", f"Logged out {credentials[cred_index]['username']} & Exiting")
+                                logging.info("Auto-login stopped.")
+                            else:
+                                display_status("Auto-login stopped.", "warning")
+                        break
+            
+            time.sleep(10)
+            
     except KeyboardInterrupt:
         if not daemon_mode:
-            print()
             display_status("Auto-login interrupted by user.", "warning")
         else:
             module.send_notification("Sophos Auto Login", "Daemon interrupted by user.")
@@ -170,16 +242,38 @@ def print_menu():
     return input(f"\n{Fore.YELLOW}Enter your choice (1-8): {Style.RESET_ALL}")
 
 def display_status(message, status_type="info"):
-    if status_type == "success":
-        print(f"\n{Fore.GREEN}✓ {message}{Style.RESET_ALL}")
-    elif status_type == "error":
-        print(f"\n{Fore.RED}✗ {message}{Style.RESET_ALL}")
-    elif status_type == "warning":
-        print(f"\n{Fore.YELLOW}⚠ {message}{Style.RESET_ALL}")
-    else:
-        print(f"\n{Fore.BLUE}ℹ {message}{Style.RESET_ALL}")
+    box_width = 50
     
-    time.sleep(1) 
+    if status_type == "success":
+        border_top = f"{Fore.GREEN}╔{'═' * box_width}╗{Style.RESET_ALL}"
+        border_bottom = f"{Fore.GREEN}╚{'═' * box_width}╝{Style.RESET_ALL}"
+        text = f"✓ {message}"
+        padding = (box_width - len(text)) // 2
+        centered_text = f"{Fore.GREEN}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
+    elif status_type == "error":
+        border_top = f"{Fore.RED}╔{'═' * box_width}╗{Style.RESET_ALL}"
+        border_bottom = f"{Fore.RED}╚{'═' * box_width}╝{Style.RESET_ALL}"
+        text = f"✗ {message}"
+        padding = (box_width - len(text)) // 2
+        centered_text = f"{Fore.RED}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
+    elif status_type == "warning":
+        border_top = f"{Fore.YELLOW}╔{'═' * box_width}╗{Style.RESET_ALL}"
+        border_bottom = f"{Fore.YELLOW}╚{'═' * box_width}╝{Style.RESET_ALL}"
+        text = f"⚠ {message}"
+        padding = (box_width - len(text)) // 2
+        centered_text = f"{Fore.YELLOW}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
+    else:
+        border_top = f"{Fore.BLUE}╔{'═' * box_width}╗{Style.RESET_ALL}"
+        border_bottom = f"{Fore.BLUE}╚{'═' * box_width}╝{Style.RESET_ALL}"
+        text = f"ℹ {message}"
+        padding = (box_width - len(text)) // 2
+        centered_text = f"{Fore.BLUE}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
+        
+    print("\n" + border_top)
+    print(centered_text)
+    print(border_bottom)
+    
+    time.sleep(1)
 
 def show_spinner(seconds, message="Processing"):
     spinner = ['-', '\\', '|', '/']

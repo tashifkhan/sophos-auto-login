@@ -8,3 +8,4 @@ dist
 autologin_script.spec
 
 .DS_Store
+test.py
