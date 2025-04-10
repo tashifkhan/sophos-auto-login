@@ -106,6 +106,7 @@ def run_auto_login(credential_manager, daemon_mode=False):
     if not daemon_mode:
         print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}\n")
     else:
+        module.send_notification("Sophos Auto Login", "Daemon started")
         logging.info("Starting auto-login process in daemon mode")
     
     count = 0
@@ -126,12 +127,14 @@ def run_auto_login(credential_manager, daemon_mode=False):
             if stop:
                 if len(credentials) == 0:
                     if daemon_mode:
+                        module.send_notification("Sophos Auto Login", "No credentials found. Daemon exiting.")
                         logging.error("No credentials found. Daemon exiting.")
                     else:
                         display_status("No credentials found.", "error")
                 else:
                     module.logout(credentials[cred_index])
                     if daemon_mode:
+                        module.send_notification("Sophos Auto Logim",f"Logged out {credentials[cred_index]['username']} & Exiting")
                         logging.info("Auto-login stopped.")
                     else:
                         display_status("Auto-login stopped.", "warning")
@@ -141,6 +144,7 @@ def run_auto_login(credential_manager, daemon_mode=False):
             print()
             display_status("Auto-login interrupted by user.", "warning")
         else:
+            module.send_notification("Sophos Auto Login", "Daemon interrupted by user.")
             logging.info("Auto-login daemon interrupted by user.")
         
         if cred_index is not None and 0 <= cred_index < len(credentials):
