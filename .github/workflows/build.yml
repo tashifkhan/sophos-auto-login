@@ -39,8 +39,8 @@ jobs:
       - name: Build Executable (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
-          pyinstaller --onefile --add-data "db/credentials.db:." autologin_script.py
-          chmod +x dist/autologin_script
+          pyinstaller --onefile --add-data "db/credentials.db:." autologin.py
+          chmod +x dist/autologin
 
       - name: Build Executable (Windows)
         if: runner.os == 'Windows'
@@ -49,7 +49,7 @@ jobs:
             echo "Creating empty credentials.db file"
             python -c "import sqlite3; conn = sqlite3.connect('db/credentials.db'); conn.execute('CREATE TABLE IF NOT EXISTS credentials (username TEXT, password TEXT)'); conn.close()"
           }
-          pyinstaller --onefile --add-data "db/credentials.db;." autologin_script.py
+          pyinstaller --onefile --add-data "db/credentials.db;." autologin.py
         shell: pwsh
 
       - name: Create Zip Archives (Linux/macOS)
@@ -57,23 +57,23 @@ jobs:
         run: |
           mkdir -p zip_dist
           if [ "$RUNNER_OS" == "Linux" ]; then
-            cp dist/autologin_script zip_dist/autologin_script
-            cd zip_dist && zip -r ../dist/autologin_script-linux.zip autologin_script
+            cp dist/autologin zip_dist/autologin
+            cd zip_dist && zip -r ../dist/autologin-linux.zip autologin
             # Remove the raw executable, keeping only the zip
-            rm -f ../dist/autologin_script
+            rm -f ../dist/autologin
           fi
           if [ "$RUNNER_OS" == "macOS" ]; then
-            cp dist/autologin_script zip_dist/autologin_script
-            cd zip_dist && zip -r ../dist/autologin_script-mac.zip autologin_script
+            cp dist/autologin zip_dist/autologin
+            cd zip_dist && zip -r ../dist/autologin-mac.zip autologin
             # Remove the raw executable, keeping only the zip
-            rm -f ../dist/autologin_script
+            rm -f ../dist/autologin
           fi
         shell: bash
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: autologin_script-${{ runner.os }}
+          name: autologin-${{ runner.os }}
           path: |
             dist/*.zip
             dist/*.exe
