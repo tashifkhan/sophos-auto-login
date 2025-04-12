@@ -21,4 +21,5 @@ def exit_handler(cred_index: int | None, credentials: Creditial, signal=None, fr
     send_notification("Sophos Auto Login", "You have been logged out & Exited")
     # Only call sys.exit(0) if not invoked as an atexit callback.
     if signal is not None or frame is not None:
+        send_notification("Sophos Auto Login", "Exited")    
         sys.exit(0)

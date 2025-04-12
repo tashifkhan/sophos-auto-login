@@ -528,4 +528,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
+        module.send_notification("Sophos Auto Login", f"An error occurred: {e}")
         print(f"{Fore.RED}An error occurred: {e}{Style.RESET_ALL}")
