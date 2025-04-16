@@ -23,6 +23,7 @@ def parse_arguments():
     parser.add_argument('--show', '-l', action='store_true', help='Display all stored credentials')
     parser.add_argument('--daemon', '-d', action='store_true', help='Run auto-login process in background (daemon mode)')
     parser.add_argument('--exit', '-q', action='store_true', help='Exit the daemon process and logout all credentials')
+    parser.add_argument('--speedtest', '-t', action='store_true', help='Run speed test')   
     
     return parser.parse_args()
 
@@ -237,7 +238,8 @@ def print_menu():
     print(f"{Fore.GREEN}[5]{Style.RESET_ALL} Export credentials to CSV")
     print(f"{Fore.GREEN}[6]{Style.RESET_ALL} Import credentials from CSV")
     print(f"{Fore.GREEN}[7]{Style.RESET_ALL} Show stored credentials")
-    print(f"{Fore.GREEN}[8]{Style.RESET_ALL} Exit")
+    print(f"{Fore.GREEN}[8]{Style.RESET_ALL} Run SpeedTest")
+    print(f"{Fore.GREEN}[9]{Style.RESET_ALL} Exit")
     
     return input(f"\n{Fore.YELLOW}Enter your choice (1-8): {Style.RESET_ALL}")
 
@@ -416,6 +418,19 @@ def main():
             display_status(f"File not found: {args.import_csv}", "error")
         return
     
+    elif args.speedtest:
+        print_header()
+        print(f"{Fore.CYAN}=== RUNNING SPEED TEST ==={Style.RESET_ALL}\n")
+        
+        show_spinner(1, "Running speed test")
+        download, upload, ping, server_info = module.speed_test()
+
+        if download is not None and upload is not None and ping is not None:
+            module.speedtest_results(download, upload, ping, server_info)
+        else:
+            display_status("Speed test failed", "error")
+        return
+    
     elif args.start:
         print_header()
         print(f"{Fore.CYAN}=== AUTO-LOGIN PROCESS ==={Style.RESET_ALL}\n")
@@ -508,6 +523,20 @@ def main():
             input(f"\n{Fore.CYAN}Press Enter to return to the main menu...{Style.RESET_ALL}")
         
         elif choice == "8":
+            print_header()
+            print(f"{Fore.CYAN}=== RUNNING SPEED TEST ==={Style.RESET_ALL}\n")
+            
+            show_spinner(1, "Running speed test")
+            download, upload, ping, server_info = module.speed_test()
+
+            if download is not None and upload is not None and ping is not None:
+                module.speedtest_results(download, upload, ping, server_info)
+            else:
+                display_status("Speed test failed", "error")
+            
+            input(f"\n{Fore.CYAN}Press Enter to return to the main menu...{Style.RESET_ALL}")
+
+        elif choice == "9":
             display_status("Exiting...", "warning")
             creds = credential_manager.get_credentials()
             if cred_index is None or not (0 <= cred_index < len(creds)):

@@ -5,7 +5,10 @@ from .wifi_name_extractor import get_wifi_name
 from .notification_handler import send_notification
 from .deamon_exit_handeler import main as deamon_exit
 from .check_internet import check_internet_connection
-from .internet_speedtest import run_speed_test as speed_test
+from .internet_speedtest import (
+    run_speed_test as speed_test, 
+    display_results as speedtest_results
+)
 
 __all__ = [
     "login",
@@ -15,5 +18,6 @@ __all__ = [
     "deamon_exit",
     "send_notification",
     "check_internet_connection",
-    "speed_test"
+    "speed_test",
+    "speedtest_results"
 ]

@@ -69,6 +69,10 @@ def run_spinner_thread(message, stop_event):
         i += 1
         time.sleep(0.1)
 
+def clear_current_line():
+    """Clear the current line in the terminal."""
+    print('\r' + ' ' * 100 + '\r', end='')
+
 def run_speed_test():
     """Runs the internet speed test and returns the results."""
     try:
@@ -91,6 +95,7 @@ def run_speed_test():
         server_stop_event.set()
         spinner_thread.join(timeout=1)
         
+        clear_current_line()
         server_info = f"{st.results.server['sponsor']} ({st.results.server['name']}, {st.results.server['country']})"
         print(f"{Fore.GREEN}Selected server: {server_info}{Style.RESET_ALL}")
         
@@ -110,7 +115,7 @@ def run_speed_test():
         download_stop_event.set()
         download_spinner.join(timeout=1)
         
-        
+        clear_current_line()
         download_speed_mbps = download_speed_bps / 1_000_000
         print(f"{Fore.GREEN}Download Speed: {download_speed_mbps:.2f} Mbps{Style.RESET_ALL}")
     
@@ -130,7 +135,7 @@ def run_speed_test():
         upload_stop_event.set()
         upload_spinner.join(timeout=1)
         
-        
+        clear_current_line()
         upload_speed_mbps = upload_speed_bps / 1_000_000
         print(f"{Fore.GREEN}Upload Speed: {upload_speed_mbps:.2f} Mbps{Style.RESET_ALL}")
         
@@ -150,14 +155,14 @@ def run_speed_test():
         ping_stop_event.set()
         ping_spinner.join(timeout=1)
         
-        
+        clear_current_line()
         ping_ms = st.results.ping
         print(f"{Fore.GREEN}Ping: {ping_ms:.2f} ms{Style.RESET_ALL}")
         
         return download_speed_mbps, upload_speed_mbps, ping_ms, server_info
 
     except Exception as e:
-        print(f"\r{' ' * 50}", end="")
+        clear_current_line()
         display_status(f"An unexpected error occurred: {e}", "error")
         return None, None, None, None
 
