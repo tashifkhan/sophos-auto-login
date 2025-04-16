@@ -311,13 +311,60 @@ def main():
 
         display_status("Exiting...", "warning")
         creds = credential_manager.get_credentials()
-        if cred_index is None or not (0 <= cred_index < len(creds)):
-            print("Logging out all credentials...")
-            for cred in creds:
-                module.logout(cred)
-        else:
-            print(f"Logging out credential: {creds[cred_index]['username']}")
-            module.logout(creds[cred_index])
+        fail = False
+        
+        try:
+            if cred_index is None:
+                print("Logging out all credentials...")
+                for cred in creds:
+                    result = module.logout(cred)
+                    if result == "Fail":
+                        print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
+                        module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
+                        fail = True
+                        break
+                    elif result is False:
+                        print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
+                        fail = True
+            else:
+                if not (0 <= cred_index < len(creds)):
+                    print(f"{Fore.YELLOW}Warning: credential index out of range, logging out all credentials{Style.RESET_ALL}")
+                    for cred in creds:
+                        result = module.logout(cred)
+                        if result == "Fail":
+                            print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
+                            module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
+                            fail = True
+                            break
+                        elif result is False:
+                            print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
+                            fail = True
+                else:
+                    print(f"Logging out credential: {creds[cred_index]['username']}")
+                    result = module.logout(creds[cred_index])
+                    if result == "Fail":
+                        print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
+                        fail = True
+                    elif result is False:
+                        print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
+                        fail = True
+            
+            if not fail:
+                module.send_notification("Sophos Auto Login", "You have been logged out & Exited")
+            else:
+                module.send_notification("Sophos Auto Login", "Some logout operations failed. Exited.")
+        
+        except Exception as e:
+            print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
+            module.send_notification("Sophos Auto Login", f"Error during logout: {e}")
+            fail = True
+        
+        finally:
+            if fail:
+                print(f"{Fore.YELLOW}Logout failed, but exiting anyway.{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.GREEN}Logout successful.{Style.RESET_ALL}")
+        
         running = False
 
         if not sys.platform.startswith('win'):
@@ -539,13 +586,60 @@ def main():
         elif choice == "9":
             display_status("Exiting...", "warning")
             creds = credential_manager.get_credentials()
-            if cred_index is None or not (0 <= cred_index < len(creds)):
-                print("Logging out all credentials...")
-                for cred in creds:
-                    module.logout(cred)
-            else:
-                print(f"Logging out credential: {creds[cred_index]['username']}")
-                module.logout(creds[cred_index])
+            fail = False
+            
+            try:
+                if cred_index is None:
+                    print("Logging out all credentials...")
+                    for cred in creds:
+                        result = module.logout(cred)
+                        if result == "Fail":
+                            print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
+                            module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
+                            fail = True
+                            break
+                        elif result is False:
+                            print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
+                            fail = True
+                else:
+                    if not (0 <= cred_index < len(creds)):
+                        print(f"{Fore.YELLOW}Warning: credential index out of range, logging out all credentials{Style.RESET_ALL}")
+                        for cred in creds:
+                            result = module.logout(cred)
+                            if result == "Fail":
+                                print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
+                                module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
+                                fail = True
+                                break
+                            elif result is False:
+                                print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
+                                fail = True
+                    else:
+                        print(f"Logging out credential: {creds[cred_index]['username']}")
+                        result = module.logout(creds[cred_index])
+                        if result == "Fail":
+                            print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
+                            fail = True
+                        elif result is False:
+                            print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
+                            fail = True
+                
+                if not fail:
+                    module.send_notification("Sophos Auto Login", "You have been logged out & Exited")
+                else:
+                    module.send_notification("Sophos Auto Login", "Some logout operations failed. Exited.")
+            
+            except Exception as e:
+                print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
+                module.send_notification("Sophos Auto Login", f"Error during logout: {e}")
+                fail = True
+            
+            finally:
+                if fail:
+                    print(f"{Fore.YELLOW}Logout failed, but exiting anyway.{Style.RESET_ALL}")
+                else:
+                    print(f"{Fore.GREEN}Logout successful.{Style.RESET_ALL}")
+                
             running = False
         
         else:
