@@ -42,11 +42,11 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
                         os.system("clear")
                         if check_internet_connection():
                             try:
-                                speed_results = speed_test()
-                                download_mbps = speed_results['download_speed_mbps']
-                                upload_mbps = speed_results['upload_speed_mbps']
-                                ping_ms = speed_results['ping_ms']
-                                server_info = speed_results['server_info']
+                                speed_results = speed_test(False)
+                                download_mbps = speed_results[1]
+                                upload_mbps = speed_results[2]
+                                ping_ms = speed_results[3]
+                                server_info = speed_results[0]
 
                                 print(f"Speed Test Results:")
                                 print(f"Download: {download_mbps:.2f} Mbps")
