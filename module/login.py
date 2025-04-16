@@ -25,7 +25,7 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
         }
 
         with requests.Session() as s:
-            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload)
+            p = s.post('http://172.16.68.6:8090/httpclient.html', data=payload, timeout=45)
             if p.status_code == 200:
                 xml_content = p.content
                 root = ET.fromstring(xml_content)
