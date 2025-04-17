@@ -9,7 +9,7 @@ import time
 import os
 
 def login(credentials: list[Creditial]) -> tuple[bool, int]:
-    cred_index = None  # Change initial value to None instead of 0
+    cred_index = None  
     if len(credentials) == 0:
         print("No credentials found.")
         return True, cred_index

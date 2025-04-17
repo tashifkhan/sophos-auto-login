@@ -103,7 +103,7 @@ def daemonize():
 
 def run_auto_login(credential_manager, daemon_mode=False):
     credentials = credential_manager.get_credentials()
-    state.update_active_credential(None, credentials)  # Initialize state with credentials
+    state.update_active_credential(None, credentials)  
     cred_index = None
     
     if len(credentials) == 0:
@@ -344,7 +344,7 @@ def main():
     
     credential_manager = CredManager.CredentialManger()
     credentials = credential_manager.get_credentials()
-    state.update_active_credential(None, credentials)  # Initialize state
+    state.update_active_credential(None, credentials)  
     running = True
 
     # Register the custom signal handler for SIGINT
@@ -403,7 +403,7 @@ def main():
                 log_file, pid_file = daemonize()
                 print(f"{Fore.GREEN}Daemon started. Log file: {log_file}, PID file: {pid_file}{Style.RESET_ALL}")
                 cred_index = run_auto_login(credential_manager, daemon_mode=True)
-                state.update_active_credential(cred_index, credential_manager.get_credentials())  # Update global state
+                state.update_active_credential(cred_index, credential_manager.get_credentials())  
             except Exception as e:
                 if isinstance(e, KeyboardInterrupt):
                     sys.exit(0)
@@ -437,7 +437,7 @@ def main():
         print(f"{Fore.CYAN}=== ADD NEW CREDENTIALS ==={Style.RESET_ALL}\n")
         credential_manager.add_credential()
         credentials = credential_manager.get_credentials()
-        state.update_active_credential(None, credentials)  # Update global state
+        state.update_active_credential(None, credentials)  
         show_spinner(1, "Updating credentials")
         display_status("Credentials added successfully", "success")
         return
@@ -447,7 +447,7 @@ def main():
         print(f"{Fore.CYAN}=== EDIT CREDENTIALS ==={Style.RESET_ALL}\n")
         result = credential_manager.edit_credentials()
         credentials = credential_manager.get_credentials()
-        state.update_active_credential(None, credentials)  # Update global state
+        state.update_active_credential(None, credentials)  
         if result:
             show_spinner(1, "Updating credentials")
             display_status("Credentials updated successfully", "success")
@@ -458,7 +458,7 @@ def main():
         print(f"{Fore.CYAN}=== DELETE CREDENTIALS ==={Style.RESET_ALL}\n")
         credential_manager.delete_credential()
         credentials = credential_manager.get_credentials()
-        state.update_active_credential(None, credentials)  # Update global state
+        state.update_active_credential(None, credentials)  
         show_spinner(1, "Updating credentials")
         display_status("Credentials deleted", "success")
         return
@@ -486,7 +486,7 @@ def main():
             show_spinner(1, "Importing")
             credential_manager.import_from_csv(args.import_csv)
             credentials = credential_manager.get_credentials()
-            state.update_active_credential(None, credentials)  # Update global state
+            state.update_active_credential(None, credentials)  
             display_status("Import process completed", "success")
         else:
             display_status(f"File not found: {args.import_csv}", "error")
