@@ -5,7 +5,6 @@ import signal
 def send_notification(title, message):
     """Send a notification using platform-specific methods."""
     try:
-        timeout = 3 
         
         system = platform.system()
         if system == 'Darwin': 
@@ -13,14 +12,14 @@ def send_notification(title, message):
     display notification "{message}" with title "{title}"
     '''
             try:
-                subprocess.run(['osascript', '-e', script], timeout=timeout, check=False)
+                subprocess.run(['osascript', '-e', script], check=False)
             except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
                 if not any(sig[0] == signal.SIGINT for sig in signal.signal_check()):
                     print(f"Notification error: {e}")
         
         elif system == 'Linux':
             try:
-                subprocess.run(['notify-send', title, message], timeout=timeout, check=False)
+                subprocess.run(['notify-send', title, message], check=False)
             except (subprocess.TimeoutExpired, subprocess.SubprocessError) as e:
                 print(f"Notification error: {e}")
         
