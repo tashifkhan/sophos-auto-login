@@ -285,7 +285,7 @@ def print_menu():
     print(f"{Fore.GREEN}[9]{Style.RESET_ALL} Logout from all credentials")
     print(f"{Fore.GREEN}[10]{Style.RESET_ALL} Exit")
     
-    return input(f"\n{Fore.YELLOW}Enter your choice (1-8): {Style.RESET_ALL}")
+    return input(f"\n{Fore.YELLOW}Enter your choice (1-10): {Style.RESET_ALL}")
 
 def display_status(message, status_type="info"):
     box_width = 50
@@ -373,7 +373,7 @@ def main():
                     print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
                     fail = True
                 else:
-                    print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}Successfully logged out: {cred['username']}{Style.RESET_ALL}")
             else:
                 print("No active credential to logout.")
             
@@ -665,7 +665,7 @@ def main():
                         print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
                         fail = True
                     else:
-                        print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+                        print(f"{Fore.GREEN}Successfully logged out: {cred['username']}{Style.RESET_ALL}")
 
                 if not fail:
                     module.send_notification("Sophos Auto Login", "You have been logged out")
