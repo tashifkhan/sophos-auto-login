@@ -1,19 +1,20 @@
 import requests
-from module.Credentials import Creditial
+from .Credentials import Creditial
 from .notification_handler import send_notification
 from .check_internet import check_internet_connection
 from .internet_speedtest import run_speed_test as speed_test
+from . import state
 import xml.etree.ElementTree as ET
 import time
 import os
 
 def login(credentials: list[Creditial]) -> tuple[bool, int]:
-    cred_index = 0
+    cred_index = None  # Change initial value to None instead of 0
     if len(credentials) == 0:
         print("No credentials found.")
         return True, cred_index
 
-    for cred in credentials:
+    for i, cred in enumerate(credentials):
         username = cred['username']
         password = cred['password']
 
@@ -38,17 +39,18 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
                         send_notification("Sophos Auto Login", f"{username} login failed")
                     elif message_text == "You are signed in as {username}":
                         print(f"Success\nConnected using {username}!\n")
+                        cred_index = i
+                        
+                        state.update_active_credential(cred_index, credentials)
+                        
                         time.sleep(2*60)
                         os.system("clear")
                         if check_internet_connection():
                             try:
                                 speed_results = speed_test(False)
-                                download_mbps = speed_results[1]
-                                upload_mbps = speed_results[2]
-                                ping_ms = speed_results[3]
-                                server_info = speed_results[0]
+                                download_mbps, upload_mbps, ping_ms, server_info = speed_results
 
-                                print(f"Speed Test Results:")
+                                print(f"\n\nSpeed Test Results:\n")
                                 print(f"Download: {download_mbps:.2f} Mbps")
                                 print(f"Upload: {upload_mbps:.2f} Mbps")
                                 print(f"Ping: {ping_ms:.2f} ms")
@@ -75,7 +77,19 @@ def login(credentials: list[Creditial]) -> tuple[bool, int]:
             else:
                 print("Error Response:", p)
                 send_notification("Sophos Auto Login", f"Error {username} - {p}")
-        cred_index += 1
 
     print("All login attempts failed.")
-    return True, cred_index
+    return True, cred_index 
+
+if __name__ == "__main__":
+    import dotenv
+    dotenv.load_dotenv()
+
+    username = os.getenv("username")
+    password = os.getenv("password")
+
+
+    credentials = [
+        {'username': username, 'password': password},
+    ]
+    login(credentials)

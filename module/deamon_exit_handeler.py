@@ -22,7 +22,7 @@ def find_autologin_pids():
     pids = []
     for line in lines:
         # Filter lines that mention "autologin" but not the grep command
-        if "autologin" in line and "grep" not in line:
+        if ("autologin" in line or "sal" in line or "sla" in line)and "grep" not in line:
             parts = line.split()
             if len(parts) > 1:
                 # PID is the second column

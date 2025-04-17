@@ -9,8 +9,12 @@ import datetime
 import argparse
 import db.CredentialManager as CredManager
 from colorama import init, Fore, Back, Style
+from module import state
 
 init(autoreset=True)
+
+# Flag to prevent multiple signal handlers from running
+signal_handler_running = False
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Sophos Auto Login Tool')
@@ -99,15 +103,16 @@ def daemonize():
 
 def run_auto_login(credential_manager, daemon_mode=False):
     credentials = credential_manager.get_credentials()
+    state.update_active_credential(None, credentials)  # Initialize state with credentials
     cred_index = None
     
     if len(credentials) == 0:
         if daemon_mode:
             logging.error("No credentials found. Daemon exiting.")
-            return
+            return None
         else:
             display_status("No credentials found. Please add credentials first.", "error")
-            return
+            return None
     
     if not daemon_mode:
         print(f"{Fore.YELLOW}Starting auto-login process. Press Ctrl+C to stop.{Style.RESET_ALL}")    
@@ -125,12 +130,22 @@ def run_auto_login(credential_manager, daemon_mode=False):
 
     # Initial login attempt
     stop, cred_index = module.login(credentials)
-    if cred_index is not None and 0 <= cred_index < len(credentials):
+    if cred_index is not None:
         active_username = credentials[cred_index]['username']
         if not daemon_mode:
             display_status(f"Logged in with credential ID #{cred_index+1} ({active_username})", "success")
         else:
             logging.info(f"Logged in with credential ID #{cred_index+1} ({active_username})")
+        
+        # Update global state - redundant but safer
+        state.update_active_credential(cred_index, credentials)
+        
+        # Update the signal handler with the current credential index
+        signal.signal(signal.SIGINT, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
+        signal.signal(signal.SIGTERM, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
+        
+        # Debug print to verify correct credential index
+        print(f"Debug: Active credential index is {cred_index}, username: {credentials[cred_index]['username']}")
     
     try:
         while True:
@@ -219,9 +234,36 @@ def run_auto_login(credential_manager, daemon_mode=False):
         else:
             module.send_notification("Sophos Auto Login", "Daemon interrupted by user.")
             logging.info("Auto-login daemon interrupted by user.")
-        
-        if cred_index is not None and 0 <= cred_index < len(credentials):
-            module.logout(credentials[cred_index])
+    
+    return cred_index
+
+# Define a proper signal handler that uses the global state
+def signal_handler(sig, frame):
+    if state.signal_handler_running:
+        print("Signal handler already running, ignoring additional signals...")
+        return
+    
+    state.signal_handler_running = True
+    
+    try:
+        idx, credential = state.get_active_credential()
+        if idx is not None and credential is not None:
+            print(f"\nExiting...\nLogging out credential: {credential['username']}")
+            result = module.logout(credential)
+            if result:
+                print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.YELLOW}Failed to logout: {credential['username']}{Style.RESET_ALL}")
+        else:
+            print("\nExiting...\nNo active credential to logout.")
+            print("Logout successful.")
+    
+    except Exception as e:
+        print(f"Error during logout: {e}")
+    
+    finally:
+        state.signal_handler_running = False
+        sys.exit(0)
 
 def print_header():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -301,9 +343,13 @@ def main():
     args = parse_arguments()
     
     credential_manager = CredManager.CredentialManger()
-    cred_index = None
     credentials = credential_manager.get_credentials()
+    state.update_active_credential(None, credentials)  # Initialize state
     running = True
+
+    # Register the custom signal handler for SIGINT
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     if args.exit:
         print_header()
@@ -314,45 +360,25 @@ def main():
         fail = False
         
         try:
-            if cred_index is None:
-                print("Logging out all credentials...")
-                for cred in creds:
-                    result = module.logout(cred)
-                    if result == "Fail":
-                        print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
-                        module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
-                        fail = True
-                        break
-                    elif result is False:
-                        print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
-                        fail = True
-            else:
-                if not (0 <= cred_index < len(creds)):
-                    print(f"{Fore.YELLOW}Warning: credential index out of range, logging out all credentials{Style.RESET_ALL}")
-                    for cred in creds:
-                        result = module.logout(cred)
-                        if result == "Fail":
-                            print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
-                            module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
-                            fail = True
-                            break
-                        elif result is False:
-                            print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
-                            fail = True
+            idx, credential = state.get_active_credential()
+            if idx is not None and credential is not None:
+                print(f"Logging out credential: {credential['username']}")
+                result = module.logout(credential)
+                if result == "Fail":
+                    print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
+                    fail = True
+                elif result is False:
+                    print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
+                    fail = True
                 else:
-                    print(f"Logging out credential: {creds[cred_index]['username']}")
-                    result = module.logout(creds[cred_index])
-                    if result == "Fail":
-                        print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
-                        fail = True
-                    elif result is False:
-                        print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
-                        fail = True
+                    print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+            else:
+                print("No active credential to logout.")
             
             if not fail:
                 module.send_notification("Sophos Auto Login", "You have been logged out & Exited")
             else:
-                module.send_notification("Sophos Auto Login", "Some logout operations failed. Exited.")
+                module.send_notification("Sophos Auto Login", "Logout failed. Exited.")
         
         except Exception as e:
             print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
@@ -376,9 +402,8 @@ def main():
             try:
                 log_file, pid_file = daemonize()
                 print(f"{Fore.GREEN}Daemon started. Log file: {log_file}, PID file: {pid_file}{Style.RESET_ALL}")
-                signal.signal(signal.SIGINT, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
-                signal.signal(signal.SIGTERM, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
-                run_auto_login(credential_manager, daemon_mode=True)
+                cred_index = run_auto_login(credential_manager, daemon_mode=True)
+                state.update_active_credential(cred_index, credential_manager.get_credentials())  # Update global state
             except Exception as e:
                 if isinstance(e, KeyboardInterrupt):
                     sys.exit(0)
@@ -388,8 +413,6 @@ def main():
             print(f"{Fore.RED}--daemon must be used with --start{Style.RESET_ALL}")
             sys.exit(1)
         return
-    
-    signal.signal(signal.SIGINT, lambda sig, frame: module.exit_handler(cred_index, credentials, sig, frame))
     
     if args.show:
         print_header()
@@ -414,6 +437,7 @@ def main():
         print(f"{Fore.CYAN}=== ADD NEW CREDENTIALS ==={Style.RESET_ALL}\n")
         credential_manager.add_credential()
         credentials = credential_manager.get_credentials()
+        state.update_active_credential(None, credentials)  # Update global state
         show_spinner(1, "Updating credentials")
         display_status("Credentials added successfully", "success")
         return
@@ -423,6 +447,7 @@ def main():
         print(f"{Fore.CYAN}=== EDIT CREDENTIALS ==={Style.RESET_ALL}\n")
         result = credential_manager.edit_credentials()
         credentials = credential_manager.get_credentials()
+        state.update_active_credential(None, credentials)  # Update global state
         if result:
             show_spinner(1, "Updating credentials")
             display_status("Credentials updated successfully", "success")
@@ -433,6 +458,7 @@ def main():
         print(f"{Fore.CYAN}=== DELETE CREDENTIALS ==={Style.RESET_ALL}\n")
         credential_manager.delete_credential()
         credentials = credential_manager.get_credentials()
+        state.update_active_credential(None, credentials)  # Update global state
         show_spinner(1, "Updating credentials")
         display_status("Credentials deleted", "success")
         return
@@ -460,6 +486,7 @@ def main():
             show_spinner(1, "Importing")
             credential_manager.import_from_csv(args.import_csv)
             credentials = credential_manager.get_credentials()
+            state.update_active_credential(None, credentials)  # Update global state
             display_status("Import process completed", "success")
         else:
             display_status(f"File not found: {args.import_csv}", "error")
@@ -481,7 +508,8 @@ def main():
     elif args.start:
         print_header()
         print(f"{Fore.CYAN}=== AUTO-LOGIN PROCESS ==={Style.RESET_ALL}\n")
-        run_auto_login(credential_manager)
+        cred_index = run_auto_login(credential_manager)
+        # State is updated by run_auto_login
         return
     
     # If no command line arguments provided, run the interactive menu loop
@@ -501,18 +529,21 @@ def main():
             print(f"{Fore.CYAN}=== ADD NEW CREDENTIALS ==={Style.RESET_ALL}\n")
             credential_manager.add_credential()
             credentials = credential_manager.get_credentials()
+            state.update_active_credential(None, credentials) 
             show_spinner(1, "Updating credentials")
         
         elif choice == "2":
             print_header()
             print(f"{Fore.CYAN}=== AUTO-LOGIN PROCESS ==={Style.RESET_ALL}\n")
             run_auto_login(credential_manager)
+            # State is updated by run_auto_login
         
         elif choice == "3":
             print_header()
             print(f"{Fore.CYAN}=== EDIT CREDENTIALS ==={Style.RESET_ALL}\n")
             result = credential_manager.edit_credentials()
             credentials = credential_manager.get_credentials()
+            state.update_active_credential(None, credentials) 
             if result:
                 show_spinner(1, "Updating credentials")
         
@@ -521,6 +552,7 @@ def main():
             print(f"{Fore.CYAN}=== DELETE CREDENTIALS ==={Style.RESET_ALL}\n")
             credential_manager.delete_credential()
             credentials = credential_manager.get_credentials()
+            state.update_active_credential(None, credentials) 
             show_spinner(1, "Updating credentials")
         
         elif choice == "5":
@@ -547,6 +579,7 @@ def main():
                 show_spinner(1, "Importing")
                 credential_manager.import_from_csv(csv_path)
                 credentials = credential_manager.get_credentials()
+                state.update_active_credential(None, credentials) 
                 display_status("Import process completed", "success")
             else:
                 display_status(f"File not found: {csv_path}", "error")
@@ -585,49 +618,30 @@ def main():
 
         elif choice == "9":
             display_status("Exiting...", "warning")
+            
             creds = credential_manager.get_credentials()
             fail = False
             
             try:
-                if cred_index is None:
-                    print("Logging out all credentials...")
-                    for cred in creds:
-                        result = module.logout(cred)
-                        if result == "Fail":
-                            print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
-                            module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
-                            fail = True
-                            break
-                        elif result is False:
-                            print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
-                            fail = True
-                else:
-                    if not (0 <= cred_index < len(creds)):
-                        print(f"{Fore.YELLOW}Warning: credential index out of range, logging out all credentials{Style.RESET_ALL}")
-                        for cred in creds:
-                            result = module.logout(cred)
-                            if result == "Fail":
-                                print(f"{Fore.RED}Warning: Timeout occurred while logging out. Stopping logout process.{Style.RESET_ALL}")
-                                module.send_notification("Sophos Auto Login", "Timeout occurred during logout. Process stopped.")
-                                fail = True
-                                break
-                            elif result is False:
-                                print(f"{Fore.YELLOW}Warning: Failed to logout user. Continuing with next credential.{Style.RESET_ALL}")
-                                fail = True
+                idx, credential = state.get_active_credential()
+                if idx is not None and credential is not None:
+                    print(f"Logging out credential: {credential['username']}")
+                    result = module.logout(credential)
+                    if result == "Fail":
+                        print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
+                        fail = True
+                    elif result is False:
+                        print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
+                        fail = True
                     else:
-                        print(f"Logging out credential: {creds[cred_index]['username']}")
-                        result = module.logout(creds[cred_index])
-                        if result == "Fail":
-                            print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
-                            fail = True
-                        elif result is False:
-                            print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
-                            fail = True
+                        print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+                else:
+                    print("No active credential to logout.")
                 
                 if not fail:
                     module.send_notification("Sophos Auto Login", "You have been logged out & Exited")
                 else:
-                    module.send_notification("Sophos Auto Login", "Some logout operations failed. Exited.")
+                    module.send_notification("Sophos Auto Login", "Logout failed. Exited.")
             
             except Exception as e:
                 print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
@@ -645,7 +659,7 @@ def main():
         else:
             display_status("Invalid choice. Please try again.", "error")
     
-    atexit.register(lambda: module.exit_handler(cred_index, credentials))
+    atexit.register(module.exit_handler) 
 
 if __name__ == "__main__":
     try:

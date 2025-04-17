@@ -37,7 +37,6 @@ def logout(credential : Credential, timeout: int = 5) -> Union[bool, str]:
                 if message_element is not None:
                     message_text = message_element.text
                     if message_text == "You&#39;ve signed out":
-                        print(f"Logged out {username}")
                         send_notification("Sophos Auto Login", f"{username} have been logged out")
                         return True
                 else:

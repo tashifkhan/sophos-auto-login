@@ -10,3 +10,5 @@ autologin.spec
 
 .DS_Store
 test.py
+.env
+.DS_Store
