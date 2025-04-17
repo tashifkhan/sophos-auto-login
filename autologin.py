@@ -27,6 +27,7 @@ def parse_arguments():
     parser.add_argument('--show', '-l', action='store_true', help='Display all stored credentials')
     parser.add_argument('--daemon', '-d', action='store_true', help='Run auto-login process in background (daemon mode)')
     parser.add_argument('--exit', '-q', action='store_true', help='Exit the daemon process and logout all credentials')
+    parser.add_argument('--logout', '-lo', action='store_true', help='Logout from all credentials')
     parser.add_argument('--speedtest', '-t', action='store_true', help='Run speed test')   
     
     return parser.parse_args()
@@ -281,7 +282,8 @@ def print_menu():
     print(f"{Fore.GREEN}[6]{Style.RESET_ALL} Import credentials from CSV")
     print(f"{Fore.GREEN}[7]{Style.RESET_ALL} Show stored credentials")
     print(f"{Fore.GREEN}[8]{Style.RESET_ALL} Run SpeedTest")
-    print(f"{Fore.GREEN}[9]{Style.RESET_ALL} Exit")
+    print(f"{Fore.GREEN}[9]{Style.RESET_ALL} Logout from all credentials")
+    print(f"{Fore.GREEN}[10]{Style.RESET_ALL} Exit")
     
     return input(f"\n{Fore.YELLOW}Enter your choice (1-8): {Style.RESET_ALL}")
 
@@ -505,6 +507,35 @@ def main():
             display_status("Speed test failed", "error")
         return
     
+    elif args.logout:
+        print_header()
+        print(f"{Fore.CYAN}=== LOGGING OUT ==={Style.RESET_ALL}\n")
+
+        creds = credential_manager.get_credentials()
+        fail = False
+
+        try:
+            for cred in creds:
+                print(f"Logging out credential: {cred['username']}")
+                result = module.logout(cred)
+                if result == "Fail":
+                    print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
+                    fail = True
+                elif result is False:
+                    print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
+                    fail = True
+                else:
+                    print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+
+            if not fail:
+                module.send_notification("Sophos Auto Login", "You have been logged out")
+            else:
+                module.send_notification("Sophos Auto Login", "Logout failed.")
+        
+        except Exception as e:
+            print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
+            fail = True
+    
     elif args.start:
         print_header()
         print(f"{Fore.CYAN}=== AUTO-LOGIN PROCESS ==={Style.RESET_ALL}\n")
@@ -617,6 +648,35 @@ def main():
             input(f"\n{Fore.CYAN}Press Enter to return to the main menu...{Style.RESET_ALL}")
 
         elif choice == "9":
+            print_header()
+            print(f"{Fore.CYAN}=== LOGGING OUT ==={Style.RESET_ALL}\n")
+
+            creds = credential_manager.get_credentials()
+            fail = False
+
+            try:
+                for cred in creds:
+                    print(f"Logging out credential: {cred['username']}")
+                    result = module.logout(cred)
+                    if result == "Fail":
+                        print(f"{Fore.RED}Warning: Timeout occurred while logging out.{Style.RESET_ALL}")
+                        fail = True
+                    elif result is False:
+                        print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
+                        fail = True
+                    else:
+                        print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+
+                if not fail:
+                    module.send_notification("Sophos Auto Login", "You have been logged out")
+                else:
+                    module.send_notification("Sophos Auto Login", "Logout failed.")
+            
+            except Exception as e:
+                print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
+                fail = True
+
+        elif choice == "10":
             display_status("Exiting...", "warning")
             
             creds = credential_manager.get_credentials()
