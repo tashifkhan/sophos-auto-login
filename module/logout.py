@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-from module.Credentials import Credential
+from .Credentials import Credential
 from typing import Union
 from .notification_handler import send_notification
 
