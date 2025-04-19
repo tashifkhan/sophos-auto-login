@@ -98,25 +98,15 @@ wheels = [
 ]
 
 [[package]]
-name = "netifaces"
-version = "0.11.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a6/91/86a6eac449ddfae239e93ffc1918cf33fd9bab35c04d1e963b311e347a73/netifaces-0.11.0.tar.gz", hash = "sha256:043a79146eb2907edf439899f262b3dfe41717d34124298ed281139a8b93ca32", size = 30106 }
-
-[[package]]
 name = "quickstart"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "flask" },
-    { name = "netifaces" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "flask", specifier = ">=3.1.0" },
-    { name = "netifaces", specifier = ">=0.11.0" },
-]
+requires-dist = [{ name = "flask", specifier = ">=3.1.0" }]
 
 [[package]]
 name = "werkzeug"

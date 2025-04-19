@@ -346,6 +346,7 @@ def documentation():
                     .sidebar {
                         left: -280px;
                         transition: left 0.3s ease;
+                        z-index: 20; /* Ensure sidebar is above overlay */
                     }
                     .sidebar.open {
                         left: 0;
@@ -365,7 +366,7 @@ def documentation():
                         right: 0;
                         bottom: 0;
                         background: rgba(0, 0, 0, 0.5);
-                        z-index: 5;
+                        z-index: 5; /* Lower z-index than sidebar */
                     }
                     .overlay.active {
                         display: block;
