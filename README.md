@@ -51,6 +51,9 @@ The script supports the following command-line arguments:
 - `--show` or `-l`: Display all stored credentials.
 - `--daemon` or `-d`: Run the auto-login process in background mode (must be used with `--start`).
 - `--exit` or `-q`: Stop the daemon process and logout all credentials.
+- `--logout` or `-lo`: Logout from all credentials without stopping the daemon process.
+- `--speedtest` or `-t`: Run a speed test to measure your current internet connection performance.
+- `--status` or `-st`: Display the current status of the daemon process.
 
 Example:
 
@@ -103,7 +106,10 @@ If no arguments are provided, the script launches an interactive menu where you 
 5. Export credentials to a CSV file.
 6. Import credentials from a CSV file.
 7. View stored credentials.
-8. Exit the program.
+8. Run a speed test.
+9. Logout from all credentials.
+10. Check daemon status.
+11. Exit the program.
 
 ### Importing Previous CSV Files
 
