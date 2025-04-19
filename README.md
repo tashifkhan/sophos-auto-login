@@ -4,6 +4,8 @@
 
 This Python script automates the login process for an internet web authentication portal. It ensures uninterrupted connectivity by relogging you in every 2 minutes to prevent automatic logout. The updated version now uses an SQLite database to store login credentials, providing a more secure and scalable approach. Additionally, the script can automatically switch between multiple IDs when a data limit is reached or if one ID fails to log in.
 
+For detailed documentation / quickstart guide, visit [sophos-autologin.tashif.codes](https://sophos-autologin.tashif.codes).
+
 ## Features
 
 - **SQLite Integration**: Credentials are securely stored in an SQLite database.
