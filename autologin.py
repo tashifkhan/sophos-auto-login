@@ -589,16 +589,22 @@ def main():
                     print(f"{Fore.YELLOW}Warning: Failed to logout user.{Style.RESET_ALL}")
                     fail = True
                 else:
-                    print(f"{Fore.GREEN}Successfully logged out: {credential['username']}{Style.RESET_ALL}")
+                    print(f"{Fore.GREEN}Successfully logged out: {cred['username']}{Style.RESET_ALL}")
 
             if not fail:
                 module.send_notification("Sophos Auto Login", "You have been logged out")
+                display_status("All users logged out successfully", "success")
             else:
                 module.send_notification("Sophos Auto Login", "Logout failed.")
+                display_status("Some users failed to log out", "warning")
         
         except Exception as e:
             print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
             fail = True
+            
+        # Terminate the program after logging out
+        print(f"{Fore.YELLOW}Exiting program...{Style.RESET_ALL}")
+        sys.exit(0)
     
     elif args.start:
         print_header()
