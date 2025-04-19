@@ -29,6 +29,7 @@ def parse_arguments():
     parser.add_argument('--exit', '-q', action='store_true', help='Exit the daemon process and logout all credentials')
     parser.add_argument('--logout', '-lo', action='store_true', help='Logout from all credentials')
     parser.add_argument('--speedtest', '-t', action='store_true', help='Run speed test')   
+    parser.add_argument('--status', '-st', action='store_true', help='Display daemon status')
     
     return parser.parse_args()
 
@@ -283,9 +284,10 @@ def print_menu():
     print(f"{Fore.GREEN}[7]{Style.RESET_ALL} Show stored credentials")
     print(f"{Fore.GREEN}[8]{Style.RESET_ALL} Run SpeedTest")
     print(f"{Fore.GREEN}[9]{Style.RESET_ALL} Logout from all credentials")
-    print(f"{Fore.GREEN}[10]{Style.RESET_ALL} Exit")
+    print(f"{Fore.GREEN}[10]{Style.RESET_ALL} Check daemon status")
+    print(f"{Fore.GREEN}[11]{Style.RESET_ALL} Exit")
     
-    return input(f"\n{Fore.YELLOW}Enter your choice (1-10): {Style.RESET_ALL}")
+    return input(f"\n{Fore.YELLOW}Enter your choice (1-11): {Style.RESET_ALL}")
 
 def display_status(message, status_type="info"):
     box_width = 50
@@ -353,6 +355,42 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    # Add status check command line argument
+    if args.status:
+        print_header()
+        print(f"{Fore.CYAN}=== DAEMON STATUS ==={Style.RESET_ALL}\n")
+        
+        status = module.get_daemon_status()
+        
+        print(status["status_str"])
+        
+        if status["error"]:
+            print(f"\n{Style.BRIGHT}{Fore.RED}⚠️  WARNING:{Style.RESET_ALL}")
+            print(f"  {Fore.RED}{status['error']}{Style.RESET_ALL}")
+        
+        print(f"\n{Style.BRIGHT}DETAILS:{Style.RESET_ALL}")
+        
+        if status["last_activity"]:
+            print(f"  {Fore.CYAN}Last Activity:{Style.RESET_ALL}      {Style.BRIGHT}{status['last_activity']}{Style.RESET_ALL} "
+                f"({status['time_since_activity']} ago)")
+        
+        if status["last_action"]:
+            print(f"  {Fore.CYAN}Last Action:{Style.RESET_ALL}        {status['last_action']}")
+        
+        if status["connection_status"]:
+            conn_color = Fore.GREEN if status["connection_status"] == "Connected" else Fore.RED
+            print(f"  {Fore.CYAN}Network Status:{Style.RESET_ALL}     "
+                f"{conn_color}{Style.BRIGHT}{status['connection_status']}{Style.RESET_ALL}")
+        
+        if status["active_credential"]:
+            print(f"  {Fore.CYAN}Active Credential:{Style.RESET_ALL}  {Style.BRIGHT}{status['active_credential']}{Style.RESET_ALL}")
+        
+        if status["runtime"]:
+            print(f"  {Fore.CYAN}Daemon Runtime:{Style.RESET_ALL}     {status['runtime']}")
+        
+        print(f"\n{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
+        return
+
     if args.exit:
         print_header()
         print(f"{Fore.CYAN}=== STOPPING DAEMON PROCESS ==={Style.RESET_ALL}\n")
@@ -404,12 +442,38 @@ def main():
             try:
                 log_file, pid_file = daemonize()
                 print(f"{Fore.GREEN}Daemon started. Log file: {log_file}, PID file: {pid_file}{Style.RESET_ALL}")
-                cred_index = run_auto_login(credential_manager, daemon_mode=True)
-                state.update_active_credential(cred_index, credential_manager.get_credentials())  
+                
+                def daemon_exit_handler():
+                    try:
+                        if os.path.exists(pid_file):
+                            with open(pid_file, 'r') as f:
+                                if int(f.read().strip()) == os.getpid():
+                                    module.send_notification("Sophos Auto Login", "Daemon has exited")
+                                    logging.info("Daemon process has exited")
+                    except Exception as e:
+                        logging.error(f"Error in daemon exit handler: {e}")
+                
+                atexit.register(daemon_exit_handler)
+                
+                try:
+                    cred_index = run_auto_login(credential_manager, daemon_mode=True)
+                    state.update_active_credential(cred_index, credential_manager.get_credentials())  
+                except Exception as e:
+                    module.send_notification("Sophos Auto Login", f"Daemon error: {str(e)}")
+                    logging.error(f"Daemon error during auto-login: {e}")
+                    raise
+                    
+            except KeyboardInterrupt:
+                module.send_notification("Sophos Auto Login", "Daemon was stopped by keyboard interrupt")
+                logging.info("Daemon stopped by keyboard interrupt")
+                sys.exit(0)
             except Exception as e:
-                if isinstance(e, KeyboardInterrupt):
-                    sys.exit(0)
-                logging.error(f"Daemon error: {e}")
+                error_msg = f"Daemon error: {str(e)}"
+                try:
+                    module.send_notification("Sophos Auto Login", error_msg)
+                except:
+                    pass  
+                logging.error(error_msg)
                 sys.exit(1)
         else:
             print(f"{Fore.RED}--daemon must be used with --start{Style.RESET_ALL}")
@@ -675,8 +739,44 @@ def main():
             except Exception as e:
                 print(f"{Fore.RED}Error during logout: {e}{Style.RESET_ALL}")
                 fail = True
+            input(f"\n{Fore.CYAN}Press Enter to return to the main menu...{Style.RESET_ALL}")
 
         elif choice == "10":
+            print_header()
+            print(f"{Fore.CYAN}=== DAEMON STATUS ==={Style.RESET_ALL}\n")
+            
+            status = module.get_daemon_status()
+            
+            print(status["status_str"])
+            
+            if status["error"]:
+                print(f"\n{Style.BRIGHT}{Fore.RED}⚠️  WARNING:{Style.RESET_ALL}")
+                print(f"  {Fore.RED}{status['error']}{Style.RESET_ALL}")
+            
+            print(f"\n{Style.BRIGHT}DETAILS:{Style.RESET_ALL}")
+            
+            if status["last_activity"]:
+                print(f"  {Fore.CYAN}Last Activity:{Style.RESET_ALL}      {Style.BRIGHT}{status['last_activity']}{Style.RESET_ALL} "
+                    f"({status['time_since_activity']} ago)")
+            
+            if status["last_action"]:
+                print(f"  {Fore.CYAN}Last Action:{Style.RESET_ALL}        {status['last_action']}")
+            
+            if status["connection_status"]:
+                conn_color = Fore.GREEN if status["connection_status"] == "Connected" else Fore.RED
+                print(f"  {Fore.CYAN}Network Status:{Style.RESET_ALL}     "
+                    f"{conn_color}{Style.BRIGHT}{status['connection_status']}{Style.RESET_ALL}")
+            
+            if status["active_credential"]:
+                print(f"  {Fore.CYAN}Active Credential:{Style.RESET_ALL}  {Style.BRIGHT}{status['active_credential']}{Style.RESET_ALL}")
+            
+            if status["runtime"]:
+                print(f"  {Fore.CYAN}Daemon Runtime:{Style.RESET_ALL}     {status['runtime']}")
+            
+            print(f"\n{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
+            input(f"\n{Fore.CYAN}Press Enter to return to the main menu...{Style.RESET_ALL}")
+        
+        elif choice == "11":
             display_status("Exiting...", "warning")
             
             creds = credential_manager.get_credentials()

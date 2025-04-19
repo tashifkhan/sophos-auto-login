@@ -9,6 +9,7 @@ from .internet_speedtest import (
     run_speed_test as speed_test, 
     display_results as speedtest_results
 )
+from .status import get_daemon_status
 
 __all__ = [
     "login",
@@ -20,4 +21,5 @@ __all__ = [
     "check_internet_connection",
     "speed_test",
     "speedtest_results"
+    "get_daemon_status",
 ]
