@@ -8,6 +8,7 @@ dist
 autologin_script.spec
 autologin.spec
 
+.venv
 .DS_Store
 test.py
 .env

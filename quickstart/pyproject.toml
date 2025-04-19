@@ -1,0 +1,9 @@
+[project]
+name = "quickstart"
+version = "0.1.0"
+description = "The Sophos Autologin Quickstart guide / Documentations"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.0",
+]
