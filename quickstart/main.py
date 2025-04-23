@@ -663,18 +663,18 @@ def documentation():
                                 <li>Download the executable for your operating system (Windows, macOS, or Linux)</li>
                                 <li>Run the downloaded file:
                                     <ul>
-                                        <li><strong>Windows</strong>: Double-click the <code>autologin_script.exe</code> file</li>
+                                        <li><strong>Windows</strong>: Double-click the <code>autologin.exe</code> file</li>
                                         <li><strong>macOS</strong>:
                                             <ul>
-                                                <li>Extract the downloaded autologin_script-mac.zip file</li>
-                                                <li>Option 1: Remove the quarantine attribute by opening Terminal, navigating to the extraction location, and running <code>xattr -d com.apple.quarantine autologin_script</code> before executing it</li>
+                                                <li>Extract the downloaded autologin-mac.zip file</li>
+                                                <li>Option 1: Remove the quarantine attribute by opening Terminal, navigating to the extraction location, and running <code>xattr -d com.apple.quarantine autologin</code> before executing it</li>
                                                 <li>Option 2: Right-click on the extracted file, select "Open" from the context menu, then confirm the security dialog</li>
                                             </ul>
                                         </li>
                                         <li><strong>Linux</strong>:
                                             <ul>
-                                                <li>Extract the downloaded autologin_script-linux.zip file</li>
-                                                <li>Open Terminal, navigate to the extraction location and run <code>./autologin_script</code></li>
+                                                <li>Extract the downloaded autologin-linux.zip file</li>
+                                                <li>Open Terminal, navigate to the extraction location and run <code>./autologin</code></li>
                                             </ul>
                                         </li>
                                     </ul>

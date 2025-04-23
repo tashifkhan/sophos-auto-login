@@ -36,7 +36,7 @@ You can download the latest pre-built executable directly from the [Releases](ht
      - Option 2: Right-click on the extracted file, select "Open" from the context menu, then confirm the security dialog that appears. Alternatively, go to System Settings > Privacy & Security and click "Allow" for the blocked application
    - **Linux**:
      - Extract the downloaded autologin_script-linux.zip file
-     - Open Terminal, navigate to the extraction location and run `./autologin_script`
+     - Open Terminal, navigate to the extraction location and run `./autologin`
 
 The executable contains all necessary dependencies and doesn't require any additional installation steps.
 
