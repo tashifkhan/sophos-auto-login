@@ -65,6 +65,7 @@ def stop_sophos():
 # coz that shit aso exits the non deamon ones too
 
 def main():
+    stop_sophos()
     pids = find_autologin_pids()
     send_notification("Sophos Auto Login", "Daemon terminated")
     kill_processes(pids)
