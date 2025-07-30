@@ -3,6 +3,7 @@ import subprocess
 import sys
 import os
 
+
 # General purpose script to kill processes for any progarm
 def find_autologin_pids():
     """
@@ -11,9 +12,12 @@ def find_autologin_pids():
     """
     try:
         ps_output = subprocess.run(
-            ["ps", "aux"], check=True,
-            stdout=subprocess.PIPE, text=True
+            ["ps", "aux"],
+            check=True,
+            stdout=subprocess.PIPE,
+            text=True,
         ).stdout
+
     except subprocess.CalledProcessError as error:
         print("Error running ps aux:", error)
         sys.exit(1)
@@ -22,12 +26,16 @@ def find_autologin_pids():
     pids = []
     for line in lines:
         # Filter lines that mention "autologin" but not the grep command
-        if any(process in line for process in ["autologin", "sal", "sla"]) and "grep" not in line:
+        if (
+            any(process in line for process in ["autologin", "sal", "sla"])
+            and "grep" not in line
+        ):
             parts = line.split()
             if len(parts) > 1:
                 # PID is the second column
                 pids.append(parts[1])
     return pids
+
 
 def kill_processes(pids):
     """
@@ -39,10 +47,15 @@ def kill_processes(pids):
 
     print(f"Found autologin processes with PIDs: {', '.join(pids)}")
     try:
-        subprocess.run(["kill"] + pids, check=True)
+        subprocess.run(
+            ["kill"] + pids,
+            check=True,
+        )
         print("Processes killed successfully.")
+
     except subprocess.CalledProcessError as error:
         print("Error killing processes:", error)
+
 
 # Forgot was storing PID in ~/.sophos-autologin/sophos-autologin.pid
 def stop_sophos():
@@ -54,21 +67,29 @@ def stop_sophos():
         with open(pid_file, "r") as file:
             pid = file.read().strip()
             print(f"Stopping Sophos autologin process with PID: {pid}")
-            subprocess.run(["kill", pid], check=True)
+            subprocess.run(
+                ["kill", pid],
+                check=True,
+            )
             print("Sophos autologin process stopped successfully.")
+
     except FileNotFoundError:
         print(f"PID file not found: {pid_file}")
+
     except subprocess.CalledProcessError as error:
         print("Error stopping Sophos autologin process:", error)
 
+
 # but will the general purpose ?
 # coz that shit aso exits the non deamon ones too
+
 
 def main():
     stop_sophos()
     pids = find_autologin_pids()
     send_notification("Sophos Auto Login", "Daemon terminated")
     kill_processes(pids)
+
 
 if __name__ == "__main__":
     main()
