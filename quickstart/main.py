@@ -6,7 +6,8 @@ import time
 
 app = Flask(__name__)
 
-@app.route('/')
+
+@app.route("/")
 def documentation():
     html = """
         <!DOCTYPE html>
@@ -1228,5 +1229,5 @@ sophos-stop     # Stop the process and logout</code></pre>
     return render_template_string(html)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, port=7546, threaded=True)
