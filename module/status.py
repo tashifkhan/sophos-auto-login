@@ -1,20 +1,30 @@
+"""
+Daemon Status Module with Rich TUI
+"""
+
 import os
 import re
 from pathlib import Path
 from datetime import datetime
-import colorama
-from colorama import Fore, Back, Style
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich.box import ROUNDED
+from rich.console import Group
 
-# Initialize colorama to support colors on all platforms
-colorama.init(autoreset=False)
+# Import shared console
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ui.console import console
 
 
-def get_daemon_status(with_colors=True):
+def get_daemon_status(with_colors: bool = True) -> dict:
     """
     Get the running status of the sophos-autologin daemon by reading from the log file.
 
     Args:
-        with_colors (bool): Whether to include terminal color codes in status strings
+        with_colors (bool): Whether to include Rich markup in status strings
 
     Returns:
         dict: A dictionary containing status information like:
@@ -22,7 +32,7 @@ def get_daemon_status(with_colors=True):
             - last_activity (str): Timestamp of the last log entry
             - last_action (str): The last action performed
             - error (str): Any error message if present
-            - status_str (str): A human-readable status string (colorized if with_colors=True)
+            - status_str (str): A human-readable status string
             - time_since_activity (str): Human-readable time since last activity
             - runtime (str): The daemon runtime if available
             - connection_status (str): Current connection status (Connected/Disconnected)
@@ -46,21 +56,20 @@ def get_daemon_status(with_colors=True):
 
     if not log_path.exists():
         status["error"] = "Log file not found, daemon may not be running"
-        status["status_str"] = _colorize(
-            "⨯ Not running (no log file)", Fore.RED, with_colors
+        status["status_str"] = _create_status_text(
+            "Not running (no log file)", False, with_colors
         )
         return status
 
     try:
         # Read the last few lines from the log file (most recent entries)
         with open(log_path, "r") as log_file:
-            # Get last 20 lines to analyze
             lines = log_file.readlines()[-20:] if log_file.readable() else []
 
         if not lines:
             status["error"] = "Log file is empty"
-            status["status_str"] = _colorize(
-                "⨯ Not running (empty log file)", Fore.RED, with_colors
+            status["status_str"] = _create_status_text(
+                "Not running (empty log file)", False, with_colors
             )
             return status
 
@@ -77,22 +86,18 @@ def get_daemon_status(with_colors=True):
         connection_pattern = r"CONNECTION CHECK \| Status: ([✓✗]) (Connected|Disconnected) \| Runtime: (.*?)$"
         credential_pattern = r"Active credential: (.*?)$"
 
-        # Find the latest connection check, credential info and action
         for line in reversed(lines):
-            # Check for connection status and runtime
             conn_match = re.search(connection_pattern, line)
             if conn_match and not status.get("connection_status"):
                 status["connection_status"] = conn_match.group(2)
                 status["runtime"] = conn_match.group(3)
                 continue
 
-            # Check for active credential
             cred_match = re.search(credential_pattern, line)
             if cred_match and not status.get("active_credential"):
                 status["active_credential"] = cred_match.group(1)
                 continue
 
-            # Look for actions
             if "➤ Internet is connected" in line:
                 status["last_action"] = "Internet is connected"
                 status["running"] = True
@@ -128,7 +133,6 @@ def get_daemon_status(with_colors=True):
                 status["running"] = False
                 break
 
-            # If we've found all the information we need, we can stop
             if (
                 status["last_action"]
                 and status["connection_status"]
@@ -137,7 +141,7 @@ def get_daemon_status(with_colors=True):
             ):
                 break
 
-        # If last log is older than 30 minutes, daemon might be stuck or not running
+        # Check if daemon might be stuck
         if status["last_activity"]:
             try:
                 last_time = datetime.strptime(
@@ -147,7 +151,6 @@ def get_daemon_status(with_colors=True):
                 time_diff_seconds = (current_time - last_time).total_seconds()
                 time_diff_minutes = time_diff_seconds / 60
 
-                # Create human-readable time difference
                 status["time_since_activity"] = _format_time_difference(
                     time_diff_seconds
                 )
@@ -155,136 +158,135 @@ def get_daemon_status(with_colors=True):
                 if time_diff_minutes > 30:
                     status["running"] = False
                     status["error"] = (
-                        f"No activity for {status['time_since_activity']}, daemon may be stuck or not running"
+                        f"No activity for {status['time_since_activity']}, daemon may be stuck"
                     )
             except ValueError:
-                # If datetime parsing fails, ignore this check
                 pass
 
-        # Create a nice status string for terminal display
-        status["status_str"] = _create_status_string(status, with_colors)
+        # Create status string
+        status["status_str"] = _create_status_text(
+            "Running" if status["running"] else "Not running",
+            status["running"],
+            with_colors,
+        )
 
     except Exception as e:
         status["error"] = f"Error reading log file: {str(e)}"
-        status["status_str"] = _colorize(f"⨯ Error: {str(e)}", Fore.RED, with_colors)
+        status["status_str"] = _create_status_text(
+            f"Error: {str(e)}", False, with_colors
+        )
 
     return status
 
 
-def _format_time_difference(seconds):
+def _format_time_difference(seconds: float) -> str:
     """Format a time difference in seconds to a human-readable string."""
     if seconds < 60:
         return f"{int(seconds)} seconds"
-
     elif seconds < 3600:
         return f"{int(seconds/60)} minutes"
-
     elif seconds < 86400:
         hours = int(seconds / 3600)
         minutes = int((seconds % 3600) / 60)
         return f"{hours} hours{f', {minutes} minutes' if minutes else ''}"
-
     else:
         days = int(seconds / 86400)
         hours = int((seconds % 86400) / 3600)
         return f"{days} days{f', {hours} hours' if hours else ''}"
 
 
-def _colorize(text, color_code, with_colors=True):
-    """Add color to text if colors are enabled."""
-    if with_colors:
-        return f"{color_code}{text}{Style.RESET_ALL}"
-    return text
-
-
-def _create_status_string(status, with_colors=True):
-    """Create a human-readable status string with optional color."""
-    if status["running"]:
-        symbol = "✓"
-        color = Fore.GREEN
-        base_msg = f"{symbol} Running"
-
-        if status["connection_status"]:
-            conn_color = (
-                Fore.GREEN if status["connection_status"] == "Connected" else Fore.RED
-            )
-            conn_symbol = "✓" if status["connection_status"] == "Connected" else "✗"
-            conn_status = _colorize(
-                f"{conn_symbol} {status['connection_status']}", conn_color, with_colors
-            )
-            base_msg += f" - Network: {conn_status}"
-
-        if status["last_action"]:
-            base_msg += f" - Last action: {status['last_action']}"
-
-        if status["runtime"]:
-            base_msg += f" - Runtime: {status['runtime']}"
-
-        if status["active_credential"]:
-            base_msg += f" - Using: {status['active_credential']}"
-
-        if status["time_since_activity"]:
-            base_msg += f" ({status['time_since_activity']} ago)"
-
-        return (
-            base_msg
-            if not with_colors
-            else f"{color}{symbol}{Style.RESET_ALL} {base_msg.split(' ', 1)[1]}"
-        )
+def _create_status_text(
+    message: str, is_running: bool, with_colors: bool = True
+) -> str:
+    """Create a status text string with optional Rich markup."""
+    if is_running:
+        icon = "✓"
+        style = "green" if with_colors else ""
     else:
-        symbol = "⨯"
-        color = Fore.RED
-        base_msg = f"{symbol} Not running"
+        icon = "⨯"
+        style = "red" if with_colors else ""
 
-        if status["last_action"]:
-            base_msg += f" - Last action: {status['last_action']}"
+    if with_colors:
+        return f"[{style}]{icon} {message}[/{style}]"
+    return f"{icon} {message}"
 
-        return _colorize(base_msg, color, with_colors)
+
+def print_daemon_status(status: dict):
+    """Print a formatted daemon status display using Rich."""
+    # Main status line
+    if status["running"]:
+        icon = "✓"
+        style = "green"
+        state = "Running"
+    else:
+        icon = "⨯"
+        style = "red"
+        state = "Not running"
+
+    status_text = Text()
+    status_text.append(f"{icon} ", style=style)
+    status_text.append(state, style=f"bold {style}")
+
+    if status.get("connection_status"):
+        conn_style = "green" if status["connection_status"] == "Connected" else "red"
+        conn_icon = "✓" if status["connection_status"] == "Connected" else "✗"
+        status_text.append(" │ Network: ", style="dim")
+        status_text.append(
+            f"{conn_icon} {status['connection_status']}", style=conn_style
+        )
+
+    console.print(status_text)
+
+    # Error/warning
+    if status.get("error"):
+        console.print()
+        console.print(f"[bold red]⚠️  WARNING:[/bold red]")
+        console.print(f"  [red]{status['error']}[/red]")
+
+    # Details table
+    console.print()
+    console.print("[bold]DETAILS:[/bold]")
+
+    details_table = Table(show_header=False, box=None, padding=(0, 1))
+    details_table.add_column("Label", style="cyan", width=20)
+    details_table.add_column("Value", style="white")
+
+    if status.get("last_activity"):
+        time_ago = status.get("time_since_activity", "")
+        details_table.add_row(
+            "Last Activity:", f"[bold]{status['last_activity']}[/bold] ({time_ago} ago)"
+        )
+
+    if status.get("last_action"):
+        details_table.add_row("Last Action:", status["last_action"])
+
+    if status.get("connection_status"):
+        conn_style = "green" if status["connection_status"] == "Connected" else "red"
+        details_table.add_row(
+            "Network Status:",
+            f"[{conn_style} bold]{status['connection_status']}[/{conn_style} bold]",
+        )
+
+    if status.get("active_credential"):
+        details_table.add_row(
+            "Active Credential:", f"[bold]{status['active_credential']}[/bold]"
+        )
+
+    if status.get("runtime"):
+        details_table.add_row("Daemon Runtime:", status["runtime"])
+
+    console.print(details_table)
 
 
 if __name__ == "__main__":
+    from ui.console import print_header
+
+    print_header()
+    console.print("[bold cyan]=== DAEMON STATUS ===[/bold cyan]")
+    console.print()
+
     status = get_daemon_status()
+    print_daemon_status(status)
 
-    print(f"\n{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
-    print(f"{Style.BRIGHT}{Fore.BLUE}  SOPHOS AUTO LOGIN - STATUS{Style.RESET_ALL}")
-    print(f"{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}\n")
-
-    # Main status line
-    print(status["status_str"])
-
-    # If there's an error, show it immediately after the status line
-    if status["error"]:
-        print(f"\n{Style.BRIGHT}{Fore.RED}⚠️  WARNING:{Style.RESET_ALL}")
-        print(f"  {Fore.RED}{status['error']}{Style.RESET_ALL}")
-
-    print(f"\n{Style.BRIGHT}DETAILS:{Style.RESET_ALL}")
-
-    if status["last_activity"]:
-        print(
-            f"  {Fore.CYAN}Last Activity:{Style.RESET_ALL}      {Style.BRIGHT}{status['last_activity']}{Style.RESET_ALL} "
-            f"({status['time_since_activity']} ago)"
-        )
-
-    if status["last_action"]:
-        print(
-            f"  {Fore.CYAN}Last Action:{Style.RESET_ALL}        {status['last_action']}"
-        )
-
-    if status["connection_status"]:
-        conn_color = (
-            Fore.GREEN if status["connection_status"] == "Connected" else Fore.RED
-        )
-        print(
-            f"  {Fore.CYAN}Network Status:{Style.RESET_ALL}     "
-            f"{conn_color}{Style.BRIGHT}{status['connection_status']}{Style.RESET_ALL}"
-        )
-
-    if status["active_credential"]:
-        print(
-            f"  {Fore.CYAN}Active Credential:{Style.RESET_ALL}  {Style.BRIGHT}{status['active_credential']}{Style.RESET_ALL}"
-        )
-
-    if status["runtime"]:
-        print(f"  {Fore.CYAN}Daemon Runtime:{Style.RESET_ALL}     {status['runtime']}")
-
-    print(f"\n{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
+    console.print()
+    console.rule(style="dim")

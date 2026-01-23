@@ -1,212 +1,212 @@
-import os
+"""
+Internet Speed Test Module with Rich TUI
+"""
+
 import time
-import speedtest
 import threading
-from colorama import init, Fore, Back, Style
+import speedtest
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    BarColumn,
+    TaskProgressColumn,
+)
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich.box import ROUNDED
 
-init(autoreset=True)
+# Import shared console
+import sys
+import os
 
-
-def display_status(message, status_type="info"):
-    """Displays a message in a formatted box based on status type."""
-    box_width = 60
-
-    if status_type == "success":
-        border_top = f"{Fore.GREEN}╔{'═' * box_width}╗{Style.RESET_ALL}"
-        border_bottom = f"{Fore.GREEN}╚{'═' * box_width}╝{Style.RESET_ALL}"
-        text = f"✓ {message}"
-        padding = (box_width - len(text)) // 2
-        centered_text = f"{Fore.GREEN}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
-
-    elif status_type == "error":
-        border_top = f"{Fore.RED}╔{'═' * box_width}╗{Style.RESET_ALL}"
-        border_bottom = f"{Fore.RED}╚{'═' * box_width}╝{Style.RESET_ALL}"
-        text = f"✗ {message}"
-        padding = (box_width - len(text)) // 2
-        centered_text = f"{Fore.RED}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
-
-    elif status_type == "warning":
-        border_top = f"{Fore.YELLOW}╔{'═' * box_width}╗{Style.RESET_ALL}"
-        border_bottom = f"{Fore.YELLOW}╚{'═' * box_width}╝{Style.RESET_ALL}"
-        text = f"⚠ {message}"
-        padding = (box_width - len(text)) // 2
-        centered_text = f"{Fore.YELLOW}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
-
-    else:  # info
-        border_top = f"{Fore.BLUE}╔{'═' * box_width}╗{Style.RESET_ALL}"
-        border_bottom = f"{Fore.BLUE}╚{'═' * box_width}╝{Style.RESET_ALL}"
-        text = f"ℹ {message}"
-        padding = (box_width - len(text)) // 2
-        centered_text = f"{Fore.BLUE}║{' ' * padding}{text}{' ' * (box_width - len(text) - padding)}║{Style.RESET_ALL}"
-
-    print("\n" + border_top)
-    print(centered_text)
-    print(border_bottom + "\n")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ui.console import console
 
 
-def display_results(download, upload, ping, server_info=None):
-    """Displays the speed test results in a formatted box."""
-    print(f"\n{Fore.CYAN}╔{'═' * 58}╗{Style.RESET_ALL}")
-    print(
-        f"{Fore.CYAN}║{Fore.WHITE}{Style.BRIGHT} SPEED TEST RESULTS {' ' * 39}{Fore.CYAN}║{Style.RESET_ALL}"
+def display_status(message: str, status_type: str = "info"):
+    """Displays a styled status message in a panel."""
+    styles = {
+        "success": ("✓", "green"),
+        "error": ("✗", "red"),
+        "warning": ("⚠", "yellow"),
+        "info": ("ℹ", "cyan"),
+    }
+
+    icon, style = styles.get(status_type, styles["info"])
+
+    content = Text()
+    content.append(f"{icon} ", style=style)
+    content.append(message, style=style)
+
+    panel = Panel(
+        content,
+        box=ROUNDED,
+        border_style=style,
+        padding=(0, 2),
     )
-    print(f"{Fore.CYAN}╠{'═' * 58}╣{Style.RESET_ALL}")
+    console.print()
+    console.print(panel)
+
+
+def display_results(
+    download: float, upload: float, ping: float, server_info: str = None
+):
+    """Displays the speed test results in a styled table."""
+    table = Table(
+        title="[bold cyan]⚡ SPEED TEST RESULTS ⚡[/bold cyan]",
+        box=ROUNDED,
+        border_style="cyan",
+        header_style="bold cyan",
+        show_header=True,
+    )
+
+    table.add_column("Metric", style="white", justify="left")
+    table.add_column("Value", justify="right")
 
     if server_info:
-        print(
-            f"{Fore.CYAN}║ {Fore.WHITE}Server: {server_info}{' ' * (50 - len(server_info))}{Fore.CYAN}║{Style.RESET_ALL}"
-        )
-        print(f"{Fore.CYAN}╠{'═' * 58}╣{Style.RESET_ALL}")
+        table.add_row("[dim]Server[/dim]", f"[dim]{server_info}[/dim]")
+        table.add_section()
 
-    download_str = f"{download:.2f} Mbps"
-    upload_str = f"{upload:.2f} Mbps"
-    ping_str = f"{ping:.2f} ms"
-
-    print(
-        f"{Fore.CYAN}║ {Fore.GREEN}Download: {download_str}{' ' * (48 - len(download_str))}{Fore.CYAN}║{Style.RESET_ALL}"
+    table.add_row(
+        "[green]↓ Download[/green]", f"[bold green]{download:.2f} Mbps[/bold green]"
     )
-    print(
-        f"{Fore.CYAN}║ {Fore.YELLOW}Upload:   {upload_str}{' ' * (48 - len(upload_str))}{Fore.CYAN}║{Style.RESET_ALL}"
+    table.add_row(
+        "[yellow]↑ Upload[/yellow]", f"[bold yellow]{upload:.2f} Mbps[/bold yellow]"
     )
-    print(
-        f"{Fore.CYAN}║ {Fore.MAGENTA}Ping:     {ping_str}{' ' * (48 - len(ping_str))}{Fore.CYAN}║{Style.RESET_ALL}"
+    table.add_row(
+        "[magenta]◉ Ping[/magenta]", f"[bold magenta]{ping:.2f} ms[/bold magenta]"
     )
 
-    print(f"{Fore.CYAN}╚{'═' * 58}╝{Style.RESET_ALL}")
+    console.print()
+    console.print(table)
 
 
-def run_spinner_thread(message, stop_event):
-    """Run a spinner animation in a separate thread."""
-    spinner = ["-", "\\", "|", "/"]
-    i = 0
-    while not stop_event.is_set():
-        print(
-            f"\r{Fore.CYAN}{message} {spinner[i % len(spinner)]}{Style.RESET_ALL}",
-            end="",
-        )
-        i += 1
-        time.sleep(0.1)
+def run_speed_test(cli_show: bool = True) -> tuple:
+    """
+    Runs the internet speed test and returns the results.
 
+    Args:
+        cli_show: Whether to display progress in the terminal
 
-def clear_current_line():
-    """Clear the current line in the terminal."""
-    print("\r" + " " * 100 + "\r", end="")
-
-
-def run_speed_test(cli_show=True):
-    """Runs the internet speed test and returns the results."""
+    Returns:
+        Tuple of (download_mbps, upload_mbps, ping_ms, server_info) or (None, None, None, None) on error
+    """
     try:
         st = speedtest.Speedtest()
         server_info = None
 
         if cli_show:
-            print(f"{Fore.YELLOW}Finding the best server...{Style.RESET_ALL}")
+            with console.status(
+                "[yellow]Finding the best server...[/yellow]", spinner="dots"
+            ) as status:
+                st.get_best_server()
+                server_info = f"{st.results.server['sponsor']} ({st.results.server['name']}, {st.results.server['country']})"
+                status.update(f"[green]✓ Selected: {server_info}[/green]")
+                time.sleep(0.5)
 
-        server_stop_event = threading.Event()
+            console.print(f"[green]✓ Server:[/green] {server_info}")
+            console.print()
 
-        if cli_show:
-            spinner_thread = threading.Thread(
-                target=run_spinner_thread,
-                args=("Selecting best server", server_stop_event),
-            )
-            spinner_thread.daemon = True
-            spinner_thread.start()
+            # Run tests with progress bar
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(bar_width=30),
+                TaskProgressColumn(),
+                console=console,
+            ) as progress:
+                # Download test
+                download_task = progress.add_task(
+                    "[cyan]Testing download speed...", total=100
+                )
 
-        st.get_best_server()
+                # Run download in thread and update progress
+                download_result = [None]
 
-        if cli_show:
-            server_stop_event.set()
-            if "spinner_thread" in locals():
-                spinner_thread.join(timeout=1)
-            clear_current_line()
+                def do_download():
+                    download_result[0] = st.download()
 
-        server_info = f"{st.results.server['sponsor']} ({st.results.server['name']}, {st.results.server['country']})"
+                download_thread = threading.Thread(target=do_download)
+                download_thread.start()
 
-        if cli_show:
-            print(f"{Fore.GREEN}Selected server: {server_info}{Style.RESET_ALL}")
-            print(f"\n{Fore.YELLOW}Starting download test...{Style.RESET_ALL}")
+                # Simulate progress while download runs
+                while download_thread.is_alive():
+                    if not progress.finished:
+                        progress.update(download_task, advance=2)
+                    time.sleep(0.1)
+                download_thread.join()
+                progress.update(download_task, completed=100)
 
-        download_stop_event = threading.Event()
+                download_speed_mbps = download_result[0] / 1_000_000
+                progress.update(
+                    download_task,
+                    description=f"[green]✓ Download: {download_speed_mbps:.2f} Mbps",
+                )
 
-        if cli_show:
-            download_spinner = threading.Thread(
-                target=run_spinner_thread,
-                args=("Testing download speed", download_stop_event),
-            )
-            download_spinner.daemon = True
-            download_spinner.start()
+                # Upload test
+                upload_task = progress.add_task(
+                    "[cyan]Testing upload speed...", total=100
+                )
 
-        download_speed_bps = st.download()
+                upload_result = [None]
 
-        if cli_show:
-            download_stop_event.set()
-            if "download_spinner" in locals():
-                download_spinner.join(timeout=1)
-            clear_current_line()
+                def do_upload():
+                    upload_result[0] = st.upload()
 
-        download_speed_mbps = download_speed_bps / 1_000_000
+                upload_thread = threading.Thread(target=do_upload)
+                upload_thread.start()
 
-        if cli_show:
-            print(
-                f"{Fore.GREEN}Download Speed: {download_speed_mbps:.2f} Mbps{Style.RESET_ALL}"
-            )
-            print(f"\n{Fore.YELLOW}Starting upload test...{Style.RESET_ALL}")
+                while upload_thread.is_alive():
+                    if not progress.finished:
+                        progress.update(upload_task, advance=2)
+                    time.sleep(0.1)
+                upload_thread.join()
+                progress.update(upload_task, completed=100)
 
-        upload_stop_event = threading.Event()
+                upload_speed_mbps = upload_result[0] / 1_000_000
+                progress.update(
+                    upload_task,
+                    description=f"[green]✓ Upload: {upload_speed_mbps:.2f} Mbps",
+                )
 
-        if cli_show:
-            upload_spinner = threading.Thread(
-                target=run_spinner_thread,
-                args=("Testing upload speed", upload_stop_event),
-            )
-            upload_spinner.daemon = True
-            upload_spinner.start()
+                # Ping (already done during server selection)
+                ping_task = progress.add_task("[cyan]Measuring ping...", total=100)
+                time.sleep(0.3)
+                progress.update(ping_task, completed=100)
+                ping_ms = st.results.ping
+                progress.update(
+                    ping_task, description=f"[green]✓ Ping: {ping_ms:.2f} ms"
+                )
 
-        upload_speed_bps = st.upload()
+            return download_speed_mbps, upload_speed_mbps, ping_ms, server_info
 
-        if cli_show:
-            upload_stop_event.set()
-            if "upload_spinner" in locals():
-                upload_spinner.join(timeout=1)
-            clear_current_line()
+        else:
+            # Silent mode for daemon/background operations
+            st.get_best_server()
+            server_info = f"{st.results.server['sponsor']} ({st.results.server['name']}, {st.results.server['country']})"
 
-        upload_speed_mbps = upload_speed_bps / 1_000_000
+            download_speed_bps = st.download()
+            download_speed_mbps = download_speed_bps / 1_000_000
 
-        if cli_show:
-            print(
-                f"{Fore.GREEN}Upload Speed: {upload_speed_mbps:.2f} Mbps{Style.RESET_ALL}"
-            )
-            print(f"\n{Fore.YELLOW}Measuring ping...{Style.RESET_ALL}")
+            upload_speed_bps = st.upload()
+            upload_speed_mbps = upload_speed_bps / 1_000_000
 
-        ping_stop_event = threading.Event()
+            ping_ms = st.results.ping
 
-        if cli_show:
-            ping_spinner = threading.Thread(
-                target=run_spinner_thread, args=("Measuring ping", ping_stop_event)
-            )
-            ping_spinner.daemon = True
-            ping_spinner.start()
-            time.sleep(0.5)
-            ping_stop_event.set()
-            if "ping_spinner" in locals():
-                ping_spinner.join(timeout=1)
-            clear_current_line()
-
-        ping_ms = st.results.ping
-
-        if cli_show:
-            print(f"{Fore.GREEN}Ping: {ping_ms:.2f} ms{Style.RESET_ALL}")
-
-        return download_speed_mbps, upload_speed_mbps, ping_ms, server_info
+            return download_speed_mbps, upload_speed_mbps, ping_ms, server_info
 
     except Exception as e:
         if cli_show:
-            clear_current_line()
             display_status(f"An unexpected error occurred: {e}", "error")
         return None, None, None, None
 
 
 if __name__ == "__main__":
+    from ui.console import print_header
+
+    print_header()
     display_status("Starting Internet Speed Test...", "info")
 
     download, upload, ping, server_info = run_speed_test()
@@ -216,4 +216,4 @@ if __name__ == "__main__":
     else:
         display_status("Speed test failed.", "error")
 
-    input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}")
+    console.input("\n[cyan]Press Enter to exit...[/cyan]")
